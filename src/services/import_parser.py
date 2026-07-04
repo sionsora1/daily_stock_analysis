@@ -178,8 +178,17 @@ def parse_import_from_bytes(data: bytes, filename: Optional[str] = None) -> List
     if ext == ".xls":
         raise ValueError("仅支持 .xlsx 格式，请将 .xls 另存为 .xlsx 后重试")
 
+    nul_count = data.count(b"\x00")
+    if nul_count:
+        logger.warning(
+            "[ImportParser] removing %d NUL byte(s) before text parsing: filename=%s",
+            nul_count,
+            filename or "-",
+        )
+        data = data.replace(b"\x00", b"")
+
     # CSV / text
-    for encoding in ("utf-8", "gbk"):
+    for encoding in ("utf-8-sig", "utf-8", "gb18030", "gbk"):
         try:
             text = data.decode(encoding)
             break

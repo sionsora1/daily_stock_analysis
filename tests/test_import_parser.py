@@ -168,6 +168,14 @@ class TestParseImportLimits:
         assert result[0][1] == "贵州茅台"
 
 
+    def test_strips_nul_bytes_from_csv_exports(self):
+        data = b"code,name\n600519,\xe8\xb4\xb5\xe5\xb7\x9e\xe8\x8c\x85\xe5\x8f\xb0\x00\x00\n00700,Tencent\x00\x00\n"
+        result = parse_import_from_bytes(data, "a.csv")
+        assert len(result) == 2
+        assert result[0] == ("600519", "贵州茅台", "medium")
+        assert result[1] == ("00700", "Tencent", "medium")
+
+
 # ---------------------------------------------------------------------------
 # parse_import_from_text
 # ---------------------------------------------------------------------------

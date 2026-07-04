@@ -1,0 +1,119 @@
+2026-07-04 22:47:54 | INFO     | root | src\logging_config.py:188 | ÈÕÖ¾ÏµÍ³³õÊ¼»¯Íê³É£¬ÈÕÖ¾Ä¿Â¼: logs
+2026-07-04 22:47:54 | INFO     | root | src\logging_config.py:189 | ³£¹æÈÕÖ¾: logs\stock_analysis_20260704.log
+2026-07-04 22:47:54 | INFO     | root | src\logging_config.py:190 | µ÷ÊÔÈÕÖ¾: logs\stock_analysis_debug_20260704.log
+2026-07-04 22:47:54 | INFO     | __main__ | main.py:1262 | ============================================================
+2026-07-04 22:47:54 | INFO     | __main__ | main.py:1263 | A¹É×ÔÑ¡¹ÉÖÇÄÜ·ÖÎöÏµÍ³ Æô¶¯
+2026-07-04 22:47:54 | INFO     | __main__ | main.py:1264 | ÔËÐÐÊ±¼ä: 2026-07-04 22:47:54
+2026-07-04 22:47:54 | INFO     | __main__ | main.py:1265 | ============================================================
+2026-07-04 22:47:54 | WARNING  | __main__ | main.py:1270 | Î´ÅäÖÃ Tushare Token£¬½«Ê¹ÓÃÆäËûÊý¾ÝÔ´
+2026-07-04 22:47:54 | WARNING  | __main__ | main.py:1270 | Î´ÅäÖÃÍ¨ÖªÇþµÀ£¬½«²»·¢ËÍÍÆËÍÍ¨Öª
+2026-07-04 22:47:54 | WARNING  | __main__ | main.py:99 | WEBUI_HOST=0.0.0.0 binds the Web UI to a public interface while ADMIN_AUTH_ENABLED=false. Keep this service behind a trusted network boundary or enable admin authentication before exposing it.
+2026-07-04 22:47:54 | INFO     | src.webui_frontend | src\webui_frontend.py:230 | Ç°¶Ë¹¹½¨¼ì²é½á¹û: needs_install=False, needs_build=True, artifact=C:\dsa\static\index.html
+2026-07-04 22:47:54 | INFO     | src.webui_frontend | src\webui_frontend.py:110 | Ö´ÐÐÇ°¶ËÃüÁî: C:\Program Files\nodejs\npm.CMD run build
+
+> dsa-web@0.0.0 build
+> tsc -b && vite build
+
+vite v7.3.6 building client environment for production...
+transforming...
+âœ“ 3156 modules transformed.
+rendering chunks...
+computing gzip size...
+../../static/index.html                                  1.22 kB â”‚ gzip:   0.54 kB
+../../static/assets/index-BE1_OqqE.css                 177.68 kB â”‚ gzip:  27.09 kB
+../../static/assets/AppPage-rIENOvuq.js                  0.40 kB â”‚ gzip:   0.30 kB
+../../static/assets/EmptyState-DFZ1Mo_D.js               1.02 kB â”‚ gzip:   0.59 kB
+../../static/assets/PageHeader-Dc93BND1.js               1.19 kB â”‚ gzip:   0.67 kB
+../../static/assets/Badge-BAEEJql3.js                    1.33 kB â”‚ gzip:   0.73 kB
+../../static/assets/marketPhase-CFwblj6S.js              1.46 kB â”‚ gzip:   0.74 kB
+../../static/assets/InlineAlert-DK9-AUee.js              1.52 kB â”‚ gzip:   0.82 kB
+../../static/assets/NotFoundPage-DhxAvQ9p.js             1.57 kB â”‚ gzip:   0.93 kB
+../../static/assets/Card-DqKV5P57.js                     1.67 kB â”‚ gzip:   0.78 kB
+../../static/assets/DashboardStateBlock-CrA-8iRm.js      2.19 kB â”‚ gzip:   1.08 kB
+../../static/assets/Pagination-CRLObvM6.js               2.67 kB â”‚ gzip:   1.31 kB
+../../static/assets/Tooltip-CoOLs40U.js                  2.89 kB â”‚ gzip:   1.55 kB
+../../static/assets/Select-C_ti20R0.js                   3.23 kB â”‚ gzip:   1.60 kB
+../../static/assets/Button-DxCuKpyR.js                   3.47 kB â”‚ gzip:   1.53 kB
+../../static/assets/reportLanguage-CjCKbJql.js           3.87 kB â”‚ gzip:   1.83 kB
+../../static/assets/portfolio-BaYVOg7l.js                3.87 kB â”‚ gzip:   1.12 kB
+../../static/assets/decisionAction-ZTeZCsX1.js           3.99 kB â”‚ gzip:   1.47 kB
+../../static/assets/Input-BhRubsfK.js                    4.56 kB â”‚ gzip:   1.95 kB
+../../static/assets/ReportMarkdownPanel-BVwaN74O.js      5.19 kB â”‚ gzip:   1.65 kB
+../../static/assets/SettingsAlert-C3G7ZATQ.js            7.72 kB â”‚ gzip:   3.13 kB
+../../static/assets/LoginPage-CeqPez32.js               10.49 kB â”‚ gzip:   3.81 kB
+../../static/assets/TokenUsagePage-y_TobyB1.js          11.43 kB â”‚ gzip:   3.77 kB
+../../static/assets/vendor-icons-BP6w-LJK.js            18.56 kB â”‚ gzip:   6.67 kB
+../../static/assets/featureText-BmfPNnYt.js             20.12 kB â”‚ gzip:   7.46 kB
+../../static/assets/BacktestPage-DMAxw4bB.js            21.90 kB â”‚ gzip:   6.74 kB
+../../static/assets/ChatPage-Du0ZNNH1.js                31.31 kB â”‚ gzip:  11.39 kB
+../../static/assets/DecisionSignalDisplay-Ckjc06S4.js   34.17 kB â”‚ gzip:  11.63 kB
+../../static/assets/DecisionSignalsPage-XPuiIy5W.js     35.95 kB â”‚ gzip:  10.26 kB
+../../static/assets/StockScreeningPage-B7jUbdBN.js      36.76 kB â”‚ gzip:  11.75 kB
+../../static/assets/PortfolioPage-DHZSmMjZ.js           37.99 kB â”‚ gzip:  10.73 kB
+../../static/assets/vendor-router-Dw8FUSln.js           38.07 kB â”‚ gzip:  13.76 kB
+../../static/assets/AlertsPage-Cxskvr8s.js              42.12 kB â”‚ gzip:  13.59 kB
+../../static/assets/vendor-D3URRbFP.js                 101.17 kB â”‚ gzip:  36.17 kB
+../../static/assets/vendor-motion-DMApaHqN.js          124.88 kB â”‚ gzip:  40.87 kB
+../../static/assets/vendor-markdown-Dvdjq8NQ.js        146.62 kB â”‚ gzip:  43.71 kB
+../../static/assets/index-BGqNXPaQ.js                  162.63 kB â”‚ gzip:  50.41 kB
+../../static/assets/vendor-react-CCdxrmpg.js           193.20 kB â”‚ gzip:  60.68 kB
+../../static/assets/HomePage-ClK9LgdF.js               197.72 kB â”‚ gzip:  62.11 kB
+../../static/assets/SettingsPage-Dyck6xMa.js           299.55 kB â”‚ gzip:  98.25 kB
+../../static/assets/vendor-charts-s7gKw3JF.js          375.70 kB â”‚ gzip: 108.88 kB
+âœ“ built in 15.82s
+2026-07-04 22:48:20 | INFO     | src.webui_frontend | src\webui_frontend.py:112 | Ç°¶Ë¾²Ì¬×ÊÔ´¹¹½¨Íê³É
+2026-07-04 22:48:35 | INFO     | uvicorn.error | .venv\lib\site-packages\uvicorn\server.py:92 | Started server process [12444]
+2026-07-04 22:48:35 | INFO     | uvicorn.error | .venv\lib\site-packages\uvicorn\lifespan\on.py:48 | Waiting for application startup.
+2026-07-04 22:48:35 | INFO     | uvicorn.error | .venv\lib\site-packages\uvicorn\lifespan\on.py:62 | Application startup complete.
+2026-07-04 22:48:35 | INFO     | uvicorn.error | .venv\lib\site-packages\uvicorn\server.py:224 | Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2026-07-04 22:48:35 | INFO     | __main__ | main.py:1098 | FastAPI ·þÎñÒÑÆô¶¯: http://0.0.0.0:8000
+2026-07-04 22:48:35 | INFO     | __main__ | main.py:1372 | Ä£Ê½: ½ö Web ·þÎñ
+2026-07-04 22:48:35 | INFO     | __main__ | main.py:1373 | Web ·þÎñÔËÐÐÖÐ: http://0.0.0.0:8000
+2026-07-04 22:48:35 | INFO     | __main__ | main.py:1374 | Í¨¹ý /api/v1/analysis/analyze ½Ó¿Ú´¥·¢·ÖÎö
+2026-07-04 22:48:35 | INFO     | __main__ | main.py:1375 | API ÎÄµµ: http://0.0.0.0:8000/docs
+2026-07-04 22:48:35 | INFO     | __main__ | main.py:1376 | °´ Ctrl+C ÍË³ö...
+2026-07-04 22:48:35 | INFO     | src.services.task_queue | src\services\task_queue.py:202 | [TaskQueue] ³õÊ¼»¯Íê³É£¬×î´ó²¢·¢: 3
+2026-07-04 22:48:35 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:7520 - "GET /api/v1/analysis/tasks/stream HTTP/1.1" 200
+2026-07-04 22:48:35 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:6833 - "GET /api/v1/analysis/tasks?status=pending,processing,cancel_requested&limit=100 HTTP/1.1" 200
+2026-07-04 22:48:44 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:1825 - "GET / HTTP/1.1" 200
+2026-07-04 22:48:44 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:1825 - "GET /assets/index-BGqNXPaQ.js HTTP/1.1" 200
+2026-07-04 22:48:44 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:11328 - "GET /assets/vendor-react-CCdxrmpg.js HTTP/1.1" 200
+2026-07-04 22:48:44 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:1119 - "GET /assets/index-BE1_OqqE.css HTTP/1.1" 200
+2026-07-04 22:48:44 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:7634 - "GET /assets/vendor-D3URRbFP.js HTTP/1.1" 200
+2026-07-04 22:48:44 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:13136 - "GET /assets/vendor-icons-BP6w-LJK.js HTTP/1.1" 200
+2026-07-04 22:48:44 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:3527 - "GET /assets/vendor-router-Dw8FUSln.js HTTP/1.1" 200
+2026-07-04 22:48:44 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:11328 - "GET /api/v1/auth/status HTTP/1.1" 200
+2026-07-04 22:48:44 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:11328 - "GET /assets/HomePage-ClK9LgdF.js HTTP/1.1" 200
+2026-07-04 22:48:44 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:1825 - "GET /assets/InlineAlert-DK9-AUee.js HTTP/1.1" 200
+2026-07-04 22:48:44 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:3527 - "GET /assets/EmptyState-DFZ1Mo_D.js HTTP/1.1" 200
+2026-07-04 22:48:44 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:1119 - "GET /assets/Badge-BAEEJql3.js HTTP/1.1" 200
+2026-07-04 22:48:44 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:7634 - "GET /assets/Button-DxCuKpyR.js HTTP/1.1" 200
+2026-07-04 22:48:44 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:13136 - "GET /assets/DashboardStateBlock-CrA-8iRm.js HTTP/1.1" 200
+2026-07-04 22:48:44 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:13136 - "GET /assets/vendor-markdown-Dvdjq8NQ.js HTTP/1.1" 200
+2026-07-04 22:48:44 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:1119 - "GET /assets/Card-DqKV5P57.js HTTP/1.1" 200
+2026-07-04 22:48:44 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:1825 - "GET /assets/Tooltip-CoOLs40U.js HTTP/1.1" 200
+2026-07-04 22:48:44 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:3527 - "GET /api/v1/alphasift/status HTTP/1.1" 200
+2026-07-04 22:48:45 | INFO     | src.agent.skills.base | src\agent\skills\base.py:360 | Loaded 15 built-in skills from C:\dsa\strategies
+2026-07-04 22:48:45 | INFO     | src.agent.factory | src\agent\factory.py:236 | [AgentFactory] SkillManager prototype cached (15 skills)
+2026-07-04 22:48:45 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:1825 - "GET /api/v1/agent/skills HTTP/1.1" 200
+2026-07-04 22:48:45 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:13136 - "GET /stocks.index.json?_t=495326 HTTP/1.1" 200
+2026-07-04 22:48:45 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:1825 - "GET /api/v1/analysis/tasks?status=pending,processing,cancel_requested&limit=100 HTTP/1.1" 200
+2026-07-04 22:48:45 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:11328 - "GET /api/v1/system/config/setup/status HTTP/1.1" 200
+2026-07-04 22:48:45 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:11328 - "GET /api/v1/analysis/tasks/stream HTTP/1.1" 200
+2026-07-04 22:48:45 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:1825 - "GET /api/v1/stocks/watchlist HTTP/1.1" 200
+2026-07-04 22:48:45 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:1825 - "GET /api/v1/analysis/tasks?status=pending,processing,cancel_requested&limit=100 HTTP/1.1" 200
+2026-07-04 22:48:45 | INFO     | src.storage | src\storage.py:1189 | Êý¾Ý¿â³õÊ¼»¯Íê³É: sqlite:///C:\dsa\data\stock_analysis.db
+2026-07-04 22:48:46 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:1119 - "GET /api/v1/history?page=1&limit=20&start_date=2026-06-04&end_date=2026-07-04 HTTP/1.1" 200
+2026-07-04 22:48:46 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:7634 - "GET /api/v1/history?page=1&limit=10&stock_code=MARKET&report_type=market_review HTTP/1.1" 200
+2026-07-04 22:48:46 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:3527 - "GET /api/v1/history/stocks?start_date=2026-04-05&end_date=2026-07-04 HTTP/1.1" 200
+2026-07-04 22:48:46 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:3527 - "GET /api/v1/history/8 HTTP/1.1" 200
+2026-07-04 22:48:46 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:7634 - "GET /api/v1/history/8/diagnostics HTTP/1.1" 200
+2026-07-04 22:48:46 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:3527 - "GET /api/v1/history/8/news?limit=8 HTTP/1.1" 200
+2026-07-04 22:49:15 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:14009 - "GET /api/v1/analysis/tasks?status=pending,processing,cancel_requested&limit=100 HTTP/1.1" 200
+2026-07-04 22:49:15 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:14337 - "GET /api/v1/history?page=1&limit=20&start_date=2026-06-04&end_date=2026-07-04 HTTP/1.1" 200
+2026-07-04 22:49:15 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:1553 - "GET /api/v1/history?page=1&limit=10&stock_code=MARKET&report_type=market_review HTTP/1.1" 200
+2026-07-04 22:49:15 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:7747 - "GET /api/v1/history/stocks?start_date=2026-04-05&end_date=2026-07-04 HTTP/1.1" 200
+2026-07-04 22:49:45 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:8548 - "GET /api/v1/analysis/tasks?status=pending,processing,cancel_requested&limit=100 HTTP/1.1" 200
+2026-07-04 22:49:45 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:11385 - "GET /api/v1/history?page=1&limit=20&start_date=2026-06-04&end_date=2026-07-04 HTTP/1.1" 200
+2026-07-04 22:49:45 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:9593 - "GET /api/v1/history?page=1&limit=10&stock_code=MARKET&report_type=market_review HTTP/1.1" 200
+2026-07-04 22:49:45 | INFO     | uvicorn.access | .venv\lib\site-packages\uvicorn\protocols\http\httptools_impl.py:484 | 127.0.0.1:14202 - "GET /api/v1/history/stocks?start_date=2026-04-05&end_date=2026-07-04 HTTP/1.1" 200
