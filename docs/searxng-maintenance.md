@@ -27,7 +27,7 @@ running it as an independent container.
 
 - The Docker daemon is not running
 - The `settings.yml` path in Compose is stale or renamed
-- Proxy settings point to a local-only address inside the container
+- Proxy settings are missing when upstream search engines require them, or they point to a local-only address that the container cannot reach
 - SearXNG returns HTML only because JSON output is not enabled
 - The local instance is healthy, but the news query has no usable results and the app falls back to Tavily
 
@@ -42,6 +42,6 @@ running it as an independent container.
 ## Maintenance Notes
 
 - Keep the sidecar independent from the Python runtime
-- Avoid hard-coding environment-specific proxy values into the image
+- Keep proxy settings optional and environment-driven; do not hard-code a local-only proxy into the image or Compose file
 - Prefer updating `docker/sidecars/searxng/settings.yml` over adding new app code when the issue is only search service behavior
 - If you change the search precedence again, update both this file and `docs/searxng-local.md`
