@@ -2360,6 +2360,31 @@ class SearchService:
             self.news_window_days,
         )
     
+    def _iter_news_priority_providers(self) -> List[BaseSearchProvider]:
+        """Yield available providers in news-first order."""
+        prioritized: List[BaseSearchProvider] = []
+        searxng_provider: Optional[BaseSearchProvider] = None
+        tavily_provider: Optional[BaseSearchProvider] = None
+
+        for provider in self._providers:
+            if not provider.is_available:
+                continue
+            if isinstance(provider, SearXNGSearchProvider):
+                searxng_provider = provider
+                continue
+            if isinstance(provider, TavilySearchProvider):
+                tavily_provider = provider
+                continue
+            prioritized.append(provider)
+
+        if searxng_provider is not None:
+            prioritized.insert(0, searxng_provider)
+        if tavily_provider is not None:
+            insert_at = 1 if prioritized and isinstance(prioritized[0], SearXNGSearchProvider) else 0
+            prioritized.insert(insert_at, tavily_provider)
+
+        return prioritized
+
     @staticmethod
     def _is_foreign_stock(stock_code: str) -> bool:
         """判断是否为港股或美股"""
@@ -3687,7 +3712,7 @@ class SearchService:
             had_provider_success = False
             best_ranked_response: Optional[SearchResponse] = None
             best_ranked_stats: Optional[Dict[str, int]] = None
-            for provider in self._providers:
+            for provider in self._iter_news_priority_providers():
                 if not provider.is_available:
                     continue
 
@@ -4078,7 +4103,7 @@ class SearchService:
                 break
             
             # 选择搜索引擎（轮流使用）
-            available_providers = [p for p in self._providers if p.is_available]
+            available_providers = self._iter_news_priority_providers()
             if not available_providers:
                 break
             
