@@ -21,3 +21,4 @@ This project now bundles a local SearXNG sidecar service in `docker/docker-compo
 - The instance does not require a separate API key at the project boundary.
 - SearXNG itself is just a search aggregator; upstream search engines may still have their own limits or token requirements.
 - If you stop the `searxng` service, news search in this project will stop working until it is started again.
+- For maintenance and upgrade steps, see [docs/searxng-maintenance.md](/D:/softwares/MY_trading/daily_stock_analysis/docs/searxng-maintenance.md).
