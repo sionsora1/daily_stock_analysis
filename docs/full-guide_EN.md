@@ -8,19 +8,19 @@ This document contains the complete configuration guide for the AI Stock Analysi
 
 ```
 daily_stock_analysis/
-├── main.py              # Main entry point
-├── src/                 # Core business logic
-│   ├── analyzer.py      # AI analyzer
-│   ├── config.py        # Configuration management
-│   ├── notification.py  # Message push notifications
-│   └── ...
-├── data_provider/       # Multi-source data adapters
-├── bot/                 # Bot interaction module
-├── api/                 # FastAPI backend service
-├── apps/dsa-web/        # React frontend
-├── docker/              # Docker configuration
-├── docs/                # Project documentation
-└── .github/workflows/   # GitHub Actions
+鈹溾攢鈹€ main.py              # Main entry point
+鈹溾攢鈹€ src/                 # Core business logic
+鈹?  鈹溾攢鈹€ analyzer.py      # AI analyzer
+鈹?  鈹溾攢鈹€ config.py        # Configuration management
+鈹?  鈹溾攢鈹€ notification.py  # Message push notifications
+鈹?  鈹斺攢鈹€ ...
+鈹溾攢鈹€ data_provider/       # Multi-source data adapters
+鈹溾攢鈹€ bot/                 # Bot interaction module
+鈹溾攢鈹€ api/                 # FastAPI backend service
+鈹溾攢鈹€ apps/dsa-web/        # React frontend
+鈹溾攢鈹€ docker/              # Docker configuration
+鈹溾攢鈹€ docs/                # Project documentation
+鈹斺攢鈹€ .github/workflows/   # GitHub Actions
 ```
 
 ## Table of Contents
@@ -47,7 +47,7 @@ Click the `Fork` button in the upper right corner.
 
 ### 2. Configure Secrets
 
-Go to your forked repo → `Settings` → `Secrets and variables` → `Actions` → `New repository secret`
+Go to your forked repo 鈫?`Settings` 鈫?`Secrets and variables` 鈫?`Actions` 鈫?`New repository secret`
 
 <div align="center">
   <img src="assets/secret_config.png" alt="GitHub Secrets Configuration" width="600">
@@ -75,8 +75,8 @@ Go to your forked repo → `Settings` → `Secrets and variables` → `Actions` 
 |------------|------|:----:|
 | `WECHAT_WEBHOOK_URL` | WeChat Work Webhook URL | Optional |
 | `FEISHU_WEBHOOK_URL` | Feishu Webhook URL | Optional |
-| `FEISHU_WEBHOOK_SECRET` | Feishu Webhook signing secret (required when “Signature” security is enabled) | Optional |
-| `FEISHU_WEBHOOK_KEYWORD` | Feishu Webhook keyword (required when “Keyword” security is enabled) | Optional |
+| `FEISHU_WEBHOOK_SECRET` | Feishu Webhook signing secret (required when 鈥淪ignature鈥?security is enabled) | Optional |
+| `FEISHU_WEBHOOK_KEYWORD` | Feishu Webhook keyword (required when 鈥淜eyword鈥?security is enabled) | Optional |
 | `TELEGRAM_BOT_TOKEN` | Telegram Bot Token (get from @BotFather) | Optional |
 | `TELEGRAM_CHAT_ID` | Telegram Chat ID | Optional |
 | `TELEGRAM_MESSAGE_THREAD_ID` | Telegram Topic ID (for sending to topics) | Optional |
@@ -143,7 +143,7 @@ Go to your forked repo → `Settings` → `Secrets and variables` → `Actions` 
 
 | Secret Name | Description | Required |
 |------------|------|:----:|
-| `STOCK_LIST` | Watchlist codes, e.g., `600519,300750,002594,7203.T,005930.KS`; English commas are recommended, while pasted Chinese commas, enumeration commas, semicolons, spaces, and newlines are recognized and normalized to English commas | ✅ |
+| `STOCK_LIST` | Watchlist codes, e.g., `600519,300750,002594,7203.T,005930.KS`; English commas are recommended, while pasted Chinese commas, enumeration commas, semicolons, spaces, and newlines are recognized and normalized to English commas | 鉁?|
 | `ANSPIRE_API_KEYS` | [Anspire AI Search](https://aisearch.anspire.cn/) optimized for Chinese content; the same key can also be used for Anspire LLM fallback scenarios (example model: `Doubao-Seed-2.0-lite`) | Recommended |
 | `SERPAPI_API_KEYS` | [SerpAPI](https://serpapi.com/baidu-search-api?utm_source=github_daily_stock_analysis) search-engine results for realtime financial news | Recommended |
 | `TAVILY_API_KEYS` | [Tavily](https://tavily.com/) Search API (for news search) | Optional |
@@ -153,9 +153,10 @@ Go to your forked repo → `Settings` → `Secrets and variables` → `Actions` 
 | `SEARXNG_BASE_URLS` | SearXNG self-hosted instances (quota-free fallback, enable format: json in settings.yml); when empty the app auto-discovers public instances | Optional |
 | `SEARXNG_PUBLIC_INSTANCES_ENABLED` | Auto-discover public SearXNG instances from `searx.space` when `SEARXNG_BASE_URLS` is empty (default `true`) | Optional |
 | `TUSHARE_TOKEN` | [Tushare Pro](https://tushare.pro/weborder/#/login?reg=834638) Token | Optional |
+> Note: The app also includes a built-in 360 News direct search path for Chinese news discovery, so the default route can work without an API key or proxy.
 | `TICKFLOW_API_KEY` | [TickFlow](https://tickflow.org) API key for optional A-share daily K-lines, realtime quotes, stock list/name lookup, and CN market review enhancement; permission or entitlement failures fall back to existing providers | Optional |
 
-#### ✅ Minimum Configuration Example
+#### 鉁?Minimum Configuration Example
 
 To get started quickly, you need at minimum:
 
@@ -344,7 +345,7 @@ For the notification baseline, diagnostics, and deployment notes, see [Notificat
 > - **ETFs**: Returns available items, marks missing capabilities as `not_supported`, and does not affect the original flow overall.
 > - **US/HK stocks**: Returns `valuation/growth/earnings/belong_boards` (sourced from `info.sector`/`info.industry`) via the yfinance adapter; `institution/capital_flow/dragon_tiger/boards` stay `not_supported` because no offshore data feed exists today. Falls back to a full `not_supported` block if yfinance is unavailable or returns empty payloads. Still fail-open.
 > - **Japanese/Korean stocks**: Current MVP uses Yfinance daily/basic quote coverage only; `institution`, `capital_flow`, `dragon_tiger`, and `boards` are not fully supported and degrade to `not_supported` (see [market boundaries](market-support.md)).
-> - **Taiwan stocks**: On top of the US/HK offshore base path, the `institution` block additionally surfaces raw 三大法人 (institutional) net buy/sell figures (TWSE T86 / TPEx, default-on, fail-open — stays `not_supported` when data is unavailable); `capital_flow`, `dragon_tiger`, and `boards` remain `not_supported`.
+> - **Taiwan stocks**: On top of the US/HK offshore base path, the `institution` block additionally surfaces raw 涓夊ぇ娉曚汉 (institutional) net buy/sell figures (TWSE T86 / TPEx, default-on, fail-open 鈥?stays `not_supported` when data is unavailable); `capital_flow`, `dragon_tiger`, and `boards` remain `not_supported`.
 > - Any exception uses fail-open logic, only logs errors without affecting the main technical/news/chip pipeline.
 > - **Field contracts**:
 >   - `fundamental_context.belong_boards` = related board list for the stock; A-shares are sourced from AkShare board membership, US/HK from yfinance `info.sector`/`info.industry`, `[]` when unavailable;
@@ -666,7 +667,7 @@ The phase labels describe regular-session state:
 | `premarket` | Before the regular session opens; does not mean extended-hours quotes were fetched |
 | `intraday` | Inside the regular session and outside lunch break or the near-close window |
 | `lunch_break` | Lunch break window supplied by the market calendar; markets without lunch breaks skip this phase |
-| `closing_auction` | Near-close heuristic window: 3 minutes for CN, 10 minutes for HK, 5 minutes for US, and 5 minutes for TW (13:25–13:30); this is not a full exchange auction model |
+| `closing_auction` | Near-close heuristic window: 3 minutes for CN, 10 minutes for HK, 5 minutes for US, and 5 minutes for TW (13:25鈥?3:30); this is not a full exchange auction model |
 | `postmarket` | After the regular session closes; does not mean post-market quotes were fetched |
 | `non_trading` | The current market-local date is not a trading session |
 | `unknown` | Unknown market, calendar unavailable, or calendar error, so the phase cannot be inferred reliably |
@@ -724,7 +725,7 @@ Market-phase context construction still supports the legacy internal `analysis_i
 
 ### Web Phase Labels (Issue #1386 P4b)
 
-P4b completes the Web visibility slice without adding a phase override selector. The in-progress TaskPanel only shows the requested `analysis_phase` echoed by P4a; in the current task-panel UI, `auto` is explicitly labeled as the requested automatic phase (`请求阶段: 自动阶段`) and is not presented as the final inferred phase. The final report page renders the actual market phase from `report.meta.market_phase_summary.phase`, and shows a `Partial bar` marker when `is_partial_bar=true`.
+P4b completes the Web visibility slice without adding a phase override selector. The in-progress TaskPanel only shows the requested `analysis_phase` echoed by P4a; in the current task-panel UI, `auto` is explicitly labeled as the requested automatic phase (`璇锋眰闃舵: 鑷姩闃舵`) and is not presented as the final inferred phase. The final report page renders the actual market phase from `report.meta.market_phase_summary.phase`, and shows a `Partial bar` marker when `is_partial_bar=true`.
 
 Data-quality visibility continues to reuse `report.details.analysis_context_pack_overview.data_quality` and the existing `AnalysisContextSummary` component. The Web UI only displays the phase label alongside the low-sensitivity data-quality summary; it does not expose the full `AnalysisContextPack`, prompt summary, raw payloads, or stripped snapshot internals. History-list fields, Bot, schedule, GitHub Actions, Desktop, notification summaries, and advanced phase override UI remain follow-up work.
 
@@ -773,9 +774,9 @@ Signal attribution analysis is rendered in all report paths:
 - `HistoryService._generate_single_stock_markdown()` (Web history drawer)
 
 Normalization functions are explicitly called in `_parse_response()` and `parse_dashboard_json()` to ensure:
-- String percentages are converted to int (e.g., `"35%"` → `35`)
+- String percentages are converted to int (e.g., `"35%"` 鈫?`35`)
 - Negative numbers are clamped to 0
-- Non-zero valid values with sum ≠ 100 are normalized to sum = 100
+- Non-zero valid values with sum 鈮?100 are normalized to sum = 100
 - All-zero values are preserved as 0 to mean no effective signal
 - Values are clamped to [0, 100]
 
@@ -832,7 +833,7 @@ The notification channel matrix and `--check-notify` CLI details are documented 
 
 ### Feishu
 
-> ⚠️ **Key distinction**: `FEISHU_WEBHOOK_SECRET` (webhook signing secret) and `FEISHU_APP_SECRET` (Feishu App Secret) are two completely different configuration variables and cannot be used interchangeably.
+> 鈿狅笍 **Key distinction**: `FEISHU_WEBHOOK_SECRET` (webhook signing secret) and `FEISHU_APP_SECRET` (Feishu App Secret) are two completely different configuration variables and cannot be used interchangeably.
 
 **Minimum viable config (no security restrictions):**
 
@@ -843,12 +844,12 @@ FEISHU_WEBHOOK_URL=https://open.feishu.cn/open-apis/bot/v2/hook/your_hook_token
 **Step-by-step setup:**
 
 1. **Create a Custom Bot in the target Feishu group**:
-   - Open the group → tap the settings icon (top right) → **Group Bots** → **Add Bot** → **Custom Bot**
+   - Open the group 鈫?tap the settings icon (top right) 鈫?**Group Bots** 鈫?**Add Bot** 鈫?**Custom Bot**
    - Enter a name for the bot, then copy the generated **Webhook URL** (format: `https://open.feishu.cn/open-apis/bot/v2/hook/...`)
 2. Set `FEISHU_WEBHOOK_URL` to the URL you just copied.
 3. Check the bot's **Security Settings** and add the corresponding config if any extra option is enabled:
    - **No extra security**: only `FEISHU_WEBHOOK_URL` is needed.
-   - **Signature verification enabled**: copy the secret shown in Feishu into `FEISHU_WEBHOOK_SECRET`. **Both sides must be enabled or disabled together** — if Feishu has signing on but `FEISHU_WEBHOOK_SECRET` is missing (or vice versa), every request will be rejected.
+   - **Signature verification enabled**: copy the secret shown in Feishu into `FEISHU_WEBHOOK_SECRET`. **Both sides must be enabled or disabled together** 鈥?if Feishu has signing on but `FEISHU_WEBHOOK_SECRET` is missing (or vice versa), every request will be rejected.
    - **Keyword enabled**: copy the exact same keyword into `FEISHU_WEBHOOK_KEYWORD`. The app will prepend it to every message automatically; no need to change report templates.
    - **IP allowlist enabled**: make sure the outbound IP of your runtime (local / Docker / GitHub Actions each have different IPs) is on the allowlist.
 4. `FEISHU_APP_ID` / `FEISHU_APP_SECRET` are for Feishu app / Stream Bot / cloud document flows only. They do **not** trigger group webhook notifications and must not be used alone instead of `FEISHU_WEBHOOK_URL`.
@@ -1021,10 +1022,10 @@ Slack supports two push methods. When both are configured, Bot API takes priorit
 
 **Method 1: Bot API (Recommended, supports image upload)**
 
-1. Create a Slack App: https://api.slack.com/apps → Create New App
+1. Create a Slack App: https://api.slack.com/apps 鈫?Create New App
 2. Add Bot Token Scopes: `chat:write`, `files:write`
 3. Install to workspace and get Bot Token (xoxb-...)
-4. Get Channel ID: channel details → copy channel ID at the bottom
+4. Get Channel ID: channel details 鈫?copy channel ID at the bottom
 5. Configure environment variables:
 
 ```bash
@@ -1139,12 +1140,12 @@ See [LLM Config Guide](LLM_CONFIG_GUIDE_EN.md). Most users only need to think in
 GEMINI_API_KEYS=key1,key2,key3
 LITELLM_MODEL=gemini/gemini-3.1-pro-preview
 
-# Cross-model fallback: when all primary keys fail, try Claude → GPT
+# Cross-model fallback: when all primary keys fail, try Claude 鈫?GPT
 # Requires ANTHROPIC_API_KEY, OPENAI_API_KEY
 LITELLM_FALLBACK_MODELS=anthropic/claude-sonnet-4-6,openai/gpt-5.4-mini
 ```
 
-> ⚠️ `LITELLM_MODEL` must include provider prefix (e.g. `gemini/`, `anthropic/`, `openai/`). Legacy `GEMINI_MODEL` (no prefix) is only used when `LITELLM_MODEL` is not set.
+> 鈿狅笍 `LITELLM_MODEL` must include provider prefix (e.g. `gemini/`, `anthropic/`, `openai/`). Legacy `GEMINI_MODEL` (no prefix) is only used when `LITELLM_MODEL` is not set.
 
 **Vision model (image stock code extraction)**: See [LLM Config Guide - Vision](LLM_CONFIG_GUIDE_EN.md#41-vision-model-image-stock-code-extraction).
 
@@ -1188,14 +1189,14 @@ Single-stock reports now keep the existing free-text `operation_advice` and add 
 
 | `action` | Common source text | `decision_type` bridge |
 | --- | --- | --- |
-| `buy` | `strong_buy`, `强烈买入`, `buy`, `买入`, `布局`, `建仓` | `buy` |
-| `add` | `add`, `加仓`, `增持`, `accumulate` | `buy` |
-| `hold` | `hold`, `持有`, `持有观察`, `洗盘观察` | `hold` |
-| `watch` | `watch`, `观望`, `等待`, `wait` | `hold` |
-| `reduce` | `reduce`, `减仓`, `trim` | `sell` |
-| `sell` | `sell`, `卖出`, `清仓`, `strong_sell`, `强烈卖出` | `sell` |
-| `avoid` | `avoid`, `回避`, `规避`, `不建议买入`, `避免买入`, `do not buy` | `hold` |
-| `alert` | `alert`, `风险预警`, `警惕`, `触发告警`, `risk alert` | `hold` |
+| `buy` | `strong_buy`, `寮虹儓涔板叆`, `buy`, `涔板叆`, `甯冨眬`, `寤轰粨` | `buy` |
+| `add` | `add`, `鍔犱粨`, `澧炴寔`, `accumulate` | `buy` |
+| `hold` | `hold`, `鎸佹湁`, `鎸佹湁瑙傚療`, `娲楃洏瑙傚療` | `hold` |
+| `watch` | `watch`, `瑙傛湜`, `绛夊緟`, `wait` | `hold` |
+| `reduce` | `reduce`, `鍑忎粨`, `trim` | `sell` |
+| `sell` | `sell`, `鍗栧嚭`, `娓呬粨`, `strong_sell`, `寮虹儓鍗栧嚭` | `sell` |
+| `avoid` | `avoid`, `鍥為伩`, `瑙勯伩`, `涓嶅缓璁拱鍏, `閬垮厤涔板叆`, `do not buy` | `hold` |
+| `alert` | `alert`, `椋庨櫓棰勮`, `璀︽儠`, `瑙﹀彂鍛婅`, `risk alert` | `hold` |
 
 The `decision_type` bridge in the table only documents compatibility between the eight-state action taxonomy and the legacy three-state statistics contract. #1390 P0 does not automatically write `action` back into the existing `decision_type`. If upstream sends both an explicit `action` and a semantically different `decision_type`, legacy statistics, backtesting, and old report semantics still follow `decision_type` / the existing inference chain; `action/action_label` remains structured display metadata.
 
@@ -1209,7 +1210,7 @@ Unknown or ambiguous advice is not coerced into `watch` or `hold`; it returns em
 
 Automatic extraction consumes structured fields from the completed report only. It does not parse Markdown, backfill old history, add configuration, or change the main report contract. Extraction failures, unknown or ambiguous advice, non-stock reports, and unrecognized markets skip signal writes without affecting report persistence. `source_report_id` is the just-saved `AnalysisHistory.id`; `trace_id` prefers the runtime diagnostics trace and falls back to the pipeline trace or `query_id`; `stock_name` comes from `AnalysisResult.name`; `trigger_source` comes from the runtime entrypoint and falls back to `system`.
 
-For P2 automatic extraction, `market_phase` first reads `market_phase_summary.phase` from the saved context snapshot and then falls back to `AnalysisResult.market_phase_summary.phase`; data quality first reads `analysis_context_pack_overview.data_quality` from the saved context snapshot and then falls back to `AnalysisResult.analysis_context_pack_overview.data_quality`. Price-plan extraction reuses the same sniper-point parser used by history persistence, mapping `dashboard.battle_plan.sniper_points.ideal_buy/secondary_buy/stop_loss/take_profit` to `entry_low/entry_high/stop_loss/target_price`; `ideal_buy` alone writes `entry_low`, `secondary_buy` alone writes `entry_high`, and when both are present they are sorted into `entry_low <= entry_high`. Missing stop-loss or target prices only lower the service-computed `plan_quality` instead of inventing fields. `watch_conditions` first reads `dashboard.phase_decision.watch_conditions` and then falls back to `dashboard.battle_plan.action_checklist`. `catalyst_summary` is written only when `dashboard.intelligence.positive_catalysts` exists and is a list. `confidence` uses a conservative report-level mapping: `高/high=0.8`, `中/medium/mid=0.6`, `低/low=0.4`; the original report confidence level remains in `metadata`.
+For P2 automatic extraction, `market_phase` first reads `market_phase_summary.phase` from the saved context snapshot and then falls back to `AnalysisResult.market_phase_summary.phase`; data quality first reads `analysis_context_pack_overview.data_quality` from the saved context snapshot and then falls back to `AnalysisResult.analysis_context_pack_overview.data_quality`. Price-plan extraction reuses the same sniper-point parser used by history persistence, mapping `dashboard.battle_plan.sniper_points.ideal_buy/secondary_buy/stop_loss/take_profit` to `entry_low/entry_high/stop_loss/target_price`; `ideal_buy` alone writes `entry_low`, `secondary_buy` alone writes `entry_high`, and when both are present they are sorted into `entry_low <= entry_high`. Missing stop-loss or target prices only lower the service-computed `plan_quality` instead of inventing fields. `watch_conditions` first reads `dashboard.phase_decision.watch_conditions` and then falls back to `dashboard.battle_plan.action_checklist`. `catalyst_summary` is written only when `dashboard.intelligence.positive_catalysts` exists and is a list. `confidence` uses a conservative report-level mapping: `楂?high=0.8`, `涓?medium/mid=0.6`, `浣?low=0.4`; the original report confidence level remains in `metadata`.
 
 Starting with P3, `DecisionSignalService` owns lifecycle defaults. Explicit `horizon` / `expires_at` values always win. When `horizon` is omitted, `alert` or `premarket/intraday/lunch_break/closing_auction` defaults to `intraday`, while `postmarket/non_trading/unknown` or missing phase context defaults to `3d`. When `expires_at` is omitted, `intraday` first uses `metadata.market_phase_summary.minutes_to_close/minutes_to_open`; without context it uses deterministic TTL fallback values (CN 4h, HK 5.5h, US 6.5h, unknown 4h). `1d/3d/5d/10d` use natural days, and `swing/long` do not auto-expire. The fallback TTL is only a no-context degradation path, not an exchange-calendar close time. Automatic extraction writes only low-sensitive `market_phase_summary.phase/session_date/minutes_to_open/minutes_to_close` hints into `metadata.market_phase_summary`; final `horizon/expires_at` values are still computed by the service.
 
@@ -1284,7 +1285,7 @@ Set the following variables in `.env` (all optional, have defaults):
 | `BACKTEST_EVAL_WINDOW_DAYS` | `10` | Evaluation window (trading days) |
 | `BACKTEST_MIN_AGE_DAYS` | `14` | Only backtest records older than N days to avoid incomplete data |
 | `BACKTEST_ENGINE_VERSION` | `v1` | Engine version, used to distinguish results when logic is updated |
-| `BACKTEST_NEUTRAL_BAND_PCT` | `2.0` | Neutral band threshold (%), ±2% treated as range-bound |
+| `BACKTEST_NEUTRAL_BAND_PCT` | `2.0` | Neutral band threshold (%), 卤2% treated as range-bound |
 
 ### Auto-run
 

@@ -1,36 +1,36 @@
-# 设置页配置帮助维护说明
+# 璁剧疆椤甸厤缃府鍔╃淮鎶よ鏄?
 
-设置页配置帮助用于把配置项的关键说明放到 WebUI 内部，减少用户在设置页和文档之间反复切换。页面上仍保留短描述，详细说明通过配置项标题旁的 help icon 打开。
+璁剧疆椤甸厤缃府鍔╃敤浜庢妸閰嶇疆椤圭殑鍏抽敭璇存槑鏀惧埌 WebUI 鍐呴儴锛屽噺灏戠敤鎴峰湪璁剧疆椤靛拰鏂囨。涔嬮棿鍙嶅鍒囨崲銆傞〉闈笂浠嶄繚鐣欑煭鎻忚堪锛岃缁嗚鏄庨€氳繃閰嶇疆椤规爣棰樻梺鐨?help icon 鎵撳紑銆?
 
-本文只说明帮助系统的维护规则，不替代完整配置文档。配置语义、默认值、运行时优先级和排障细节仍以 `.env.example`、`docs/full-guide.md` 及对应专题文档为事实源。
+鏈枃鍙鏄庡府鍔╃郴缁熺殑缁存姢瑙勫垯锛屼笉鏇夸唬瀹屾暣閰嶇疆鏂囨。銆傞厤缃涔夈€侀粯璁ゅ€笺€佽繍琛屾椂浼樺厛绾у拰鎺掗殰缁嗚妭浠嶄互 `.env.example`銆乣docs/full-guide.md` 鍙婂搴斾笓棰樻枃妗ｄ负浜嬪疄婧愩€?
 
-## 数据结构
+## 鏁版嵁缁撴瀯
 
-后端配置注册表在 `src/core/config_registry.py` 中为字段追加帮助元数据：
+鍚庣閰嶇疆娉ㄥ唽琛ㄥ湪 `src/core/config_registry.py` 涓负瀛楁杩藉姞甯姪鍏冩暟鎹細
 
-- `help_key`：前端多语言帮助文案的稳定 key。
-- `examples`：可直接展示的配置样例。敏感字段只能使用占位符，例如 `sk-xxxx`、`your_token`。
-- `docs`：相关文档链接，优先指向仓库内已有专题文档或完整指南。
-- `warning_codes`：面向前端或后续校验扩展的稳定提示 code。
+- `help_key`锛氬墠绔璇█甯姪鏂囨鐨勭ǔ瀹?key銆?
+- `examples`锛氬彲鐩存帴灞曠ず鐨勯厤缃牱渚嬨€傛晱鎰熷瓧娈靛彧鑳戒娇鐢ㄥ崰浣嶇锛屼緥濡?`sk-xxxx`銆乣your_token`銆?
+- `docs`锛氱浉鍏虫枃妗ｉ摼鎺ワ紝浼樺厛鎸囧悜浠撳簱鍐呭凡鏈変笓棰樻枃妗ｆ垨瀹屾暣鎸囧崡銆?
+- `warning_codes`锛氶潰鍚戝墠绔垨鍚庣画鏍￠獙鎵╁睍鐨勭ǔ瀹氭彁绀?code銆?
 
-前端长文案维护在 `apps/dsa-web/src/locales/settingsHelp.ts`：
+鍓嶇闀挎枃妗堢淮鎶ゅ湪 `apps/dsa-web/src/locales/settingsHelp.ts`锛?
 
-- 默认展示中文文案。
-- 英文文案保留同样结构，便于后续扩展语言切换。
-- 文案应解释用途、取值说明、影响范围、注意事项和相关文档，不应复制完整专题文档。
+- 榛樿灞曠ず涓枃鏂囨銆?
+- 鑻辨枃鏂囨淇濈暀鍚屾牱缁撴瀯锛屼究浜庡悗缁墿灞曡瑷€鍒囨崲銆?
+- 鏂囨搴旇В閲婄敤閫斻€佸彇鍊艰鏄庛€佸奖鍝嶈寖鍥淬€佹敞鎰忎簨椤瑰拰鐩稿叧鏂囨。锛屼笉搴斿鍒跺畬鏁翠笓棰樻枃妗ｃ€?
 
-## WebUI 语言说明（非配置项）
+## WebUI 璇█璇存槑锛堥潪閰嶇疆椤癸級
 
-本项目新增独立的 WebUI 界面语言能力（`zh` / `en`），用于静态页面文案、导航与通用控件文案。该状态与 `REPORT_LANGUAGE` 解耦，不改写报告语言语义。
+鏈」鐩柊澧炵嫭绔嬬殑 WebUI 鐣岄潰璇█鑳藉姏锛坄zh` / `en`锛夛紝鐢ㄤ簬闈欐€侀〉闈㈡枃妗堛€佸鑸笌閫氱敤鎺т欢鏂囨銆傝鐘舵€佷笌 `REPORT_LANGUAGE` 瑙ｈ€︼紝涓嶆敼鍐欐姤鍛婅瑷€璇箟銆?
 
-- 状态键：`dsa.uiLanguage`（`localStorage`，浏览器端持久化）。
-- 初始化优先级：`localStorage` 有效值优先，其次识别浏览器语言（`zh-*` / `en-*`），最后回退 `zh`。
-- 该语言开关不属于 `.env` 配置字段，不在 `system/config` 的可配置字段清单中体现。
-- 界面切换会同步 `document.documentElement.lang`（`zh-CN` 或 `en`）以利于可访问性与无障碍语义。
+- 鐘舵€侀敭锛歚dsa.uiLanguage`锛坄localStorage`锛屾祻瑙堝櫒绔寔涔呭寲锛夈€?
+- 鍒濆鍖栦紭鍏堢骇锛歚localStorage` 鏈夋晥鍊间紭鍏堬紝鍏舵璇嗗埆娴忚鍣ㄨ瑷€锛坄zh-*` / `en-*`锛夛紝鏈€鍚庡洖閫€ `zh`銆?
+- 璇ヨ瑷€寮€鍏充笉灞炰簬 `.env` 閰嶇疆瀛楁锛屼笉鍦?`system/config` 鐨勫彲閰嶇疆瀛楁娓呭崟涓綋鐜般€?
+- 鐣岄潰鍒囨崲浼氬悓姝?`document.documentElement.lang`锛坄zh-CN` 鎴?`en`锛変互鍒╀簬鍙闂€т笌鏃犻殰纰嶈涔夈€?
 
-## 覆盖范围
+## 瑕嗙洊鑼冨洿
 
-PR1 覆盖基础设施与首批代表性配置项：
+PR1 瑕嗙洊鍩虹璁炬柦涓庨鎵逛唬琛ㄦ€ч厤缃」锛?
 
 - `STOCK_LIST`
 - `LITELLM_MODEL`
@@ -38,63 +38,64 @@ PR1 覆盖基础设施与首批代表性配置项：
 - `FEISHU_WEBHOOK_URL`
 - `WEBUI_HOST`
 
-PR2 继续覆盖高频、易填错配置项：
+PR2 缁х画瑕嗙洊楂橀銆佹槗濉敊閰嶇疆椤癸細
 
-- AI 模型运行时：Agent 主模型、fallback 模型、高级 YAML 路由、temperature、provider API Key、OpenAI-compatible Base URL。
-- LLM Channels 编辑器内部字段：渠道名、协议、Base URL、API Key、模型列表、运行时能力检测、主模型、Agent 主模型、fallback、Vision 和 temperature。
-- 数据源与搜索：Tushare、股票索引远程更新开关、实时行情优先级、实时技术指标、搜索 API Key、SearXNG、筹码分布、新闻窗口。
-- 通知：Webhook、Telegram、邮件、Discord/Slack 等聊天平台、报告输出、Webhook SSL 校验。
-- WebUI / auth / schedule / proxy：Host、Port、登录保护、可信反向代理、定时任务、交易日检查、网络代理。
+- AI 妯″瀷杩愯鏃讹細Agent 涓绘ā鍨嬨€乫allback 妯″瀷銆侀珮绾?YAML 璺敱銆乼emperature銆乸rovider API Key銆丱penAI-compatible Base URL銆?
+- LLM Channels 缂栬緫鍣ㄥ唴閮ㄥ瓧娈碉細娓犻亾鍚嶃€佸崗璁€丅ase URL銆丄PI Key銆佹ā鍨嬪垪琛ㄣ€佽繍琛屾椂鑳藉姏妫€娴嬨€佷富妯″瀷銆丄gent 涓绘ā鍨嬨€乫allback銆乂ision 鍜?temperature銆?
+- 鏁版嵁婧愪笌鎼滅储锛歍ushare銆佽偂绁ㄧ储寮曡繙绋嬫洿鏂板紑鍏炽€佸疄鏃惰鎯呬紭鍏堢骇銆佸疄鏃舵妧鏈寚鏍囥€佹悳绱?API Key銆丼earXNG銆佺鐮佸垎甯冦€佹柊闂荤獥鍙ｃ€?
+- 閫氱煡锛歐ebhook銆乀elegram銆侀偖浠躲€丏iscord/Slack 绛夎亰澶╁钩鍙般€佹姤鍛婅緭鍑恒€乄ebhook SSL 鏍￠獙銆?
+- WebUI / auth / schedule / proxy锛欻ost銆丳ort銆佺櫥褰曚繚鎶ゃ€佸彲淇″弽鍚戜唬鐞嗐€佸畾鏃朵换鍔°€佷氦鏄撴棩妫€鏌ャ€佺綉缁滀唬鐞嗐€?
 
-PR3 registered-field slice / 阶段性补齐：聚焦 Web 设置页中实际展示/可配置字段的 Help 补齐，包括通用配置卡片当前可见字段和 AI legacy 条件可见字段：
+PR3 registered-field slice / 闃舵鎬цˉ榻愶細鑱氱劍 Web 璁剧疆椤典腑瀹為檯灞曠ず/鍙厤缃瓧娈电殑 Help 琛ラ綈锛屽寘鎷€氱敤閰嶇疆鍗＄墖褰撳墠鍙瀛楁鍜?AI legacy 鏉′欢鍙瀛楁锛?
 
-- Agent 配置（21 字段）：Agent 模式、最大推理步数、策略列表、策略目录、自然语言路由、架构、编排器模式、超时、风险否决、Deep Research 预算/超时、记忆、策略自动权重、策略路由、问股可见对话上下文压缩、事件监控开关/间隔、告警规则 JSON。
-- 回测配置（5 字段）：回测开关、评估窗口、最小记录年龄、引擎版本、中性回报带。
-- 报告配置（9 字段）：仅推送摘要、显示模型名、模板目录、渲染引擎、完整性校验/重试、历史信号对比、逐股推送、合并邮件。
-- 通知路由配置（9 字段）：报告/告警/系统错误渠道路由、去重/冷却、静默时段/时区、最低等级、每日摘要（预留）。
-- 系统运行时（7 字段）：日志级别、调试模式、最大并发、分析间隔、大盘分析开关/市场/配色。
-- AI legacy 与 Anspire 配置：provider 专用多 Key、模型名、温度、Vision 模型、max tokens 与 Anspire LLM 网关字段。
-- 数据源与搜索：TickFlow、SerpAPI、Brave、Bocha、MiniMax、SearXNG 公共实例、BIAS 阈值和 Pytdx 服务器字段。
-- 通知高级字段：飞书高级安全/应用字段、Telegram topic、Discord/Slack 高级字段、Pushover、ntfy、Gotify、PushPlus、ServerChan3、AstrBot 和自定义 Webhook 高级模板/鉴权字段。
+- Agent 閰嶇疆锛?1 瀛楁锛夛細Agent 妯″紡銆佹渶澶ф帹鐞嗘鏁般€佺瓥鐣ュ垪琛ㄣ€佺瓥鐣ョ洰褰曘€佽嚜鐒惰瑷€璺敱銆佹灦鏋勩€佺紪鎺掑櫒妯″紡銆佽秴鏃躲€侀闄╁惁鍐炽€丏eep Research 棰勭畻/瓒呮椂銆佽蹇嗐€佺瓥鐣ヨ嚜鍔ㄦ潈閲嶃€佺瓥鐣ヨ矾鐢便€侀棶鑲″彲瑙佸璇濅笂涓嬫枃鍘嬬缉銆佷簨浠剁洃鎺у紑鍏?闂撮殧銆佸憡璀﹁鍒?JSON銆?
+- 鍥炴祴閰嶇疆锛? 瀛楁锛夛細鍥炴祴寮€鍏炽€佽瘎浼扮獥鍙ｃ€佹渶灏忚褰曞勾榫勩€佸紩鎿庣増鏈€佷腑鎬у洖鎶ュ甫銆?
+- 鎶ュ憡閰嶇疆锛? 瀛楁锛夛細浠呮帹閫佹憳瑕併€佹樉绀烘ā鍨嬪悕銆佹ā鏉跨洰褰曘€佹覆鏌撳紩鎿庛€佸畬鏁存€ф牎楠?閲嶈瘯銆佸巻鍙蹭俊鍙峰姣斻€侀€愯偂鎺ㄩ€併€佸悎骞堕偖浠躲€?
+- 閫氱煡璺敱閰嶇疆锛? 瀛楁锛夛細鎶ュ憡/鍛婅/绯荤粺閿欒娓犻亾璺敱銆佸幓閲?鍐峰嵈銆侀潤榛樻椂娈?鏃跺尯銆佹渶浣庣瓑绾с€佹瘡鏃ユ憳瑕侊紙棰勭暀锛夈€?
+- 绯荤粺杩愯鏃讹紙7 瀛楁锛夛細鏃ュ織绾у埆銆佽皟璇曟ā寮忋€佹渶澶у苟鍙戙€佸垎鏋愰棿闅斻€佸ぇ鐩樺垎鏋愬紑鍏?甯傚満/閰嶈壊銆?
+- AI legacy 涓?Anspire 閰嶇疆锛歱rovider 涓撶敤澶?Key銆佹ā鍨嬪悕銆佹俯搴︺€乂ision 妯″瀷銆乵ax tokens 涓?Anspire LLM 缃戝叧瀛楁銆?
+- 鏁版嵁婧愪笌鎼滅储锛歍ickFlow銆丼erpAPI銆丅rave銆丅ocha銆丮iniMax銆丼earXNG 鍏叡瀹炰緥銆丅IAS 闃堝€煎拰 Pytdx 鏈嶅姟鍣ㄥ瓧娈点€?
+- 閫氱煡楂樼骇瀛楁锛氶涔﹂珮绾у畨鍏?搴旂敤瀛楁銆乀elegram topic銆丏iscord/Slack 楂樼骇瀛楁銆丳ushover銆乶tfy銆丟otify銆丳ushPlus銆丼erverChan3銆丄strBot 鍜岃嚜瀹氫箟 Webhook 楂樼骇妯℃澘/閴存潈瀛楁銆?
 
-Issue #1512 收口后，Web 设置页只展示后端配置注册表中的正式字段。未注册的 `.env` key 不再作为普通可编辑设置项展示，避免 raw key、`Auto-inferred field metadata.` 和无 help 按钮的配置项进入中文界面；这些 key 仍可通过 `.env` 文件或导入/导出能力保留和维护。
+- 数据源与搜索：内置 360 新闻直连搜索、TickFlow、SerpAPI、Brave、Bocha、MiniMax、SearXNG 公共实例、BIAS 阈值和 Pytdx 服务器字段。
+Issue #1512 鏀跺彛鍚庯紝Web 璁剧疆椤靛彧灞曠ず鍚庣閰嶇疆娉ㄥ唽琛ㄤ腑鐨勬寮忓瓧娈点€傛湭娉ㄥ唽鐨?`.env` key 涓嶅啀浣滀负鏅€氬彲缂栬緫璁剧疆椤瑰睍绀猴紝閬垮厤 raw key銆乣Auto-inferred field metadata.` 鍜屾棤 help 鎸夐挳鐨勯厤缃」杩涘叆涓枃鐣岄潰锛涜繖浜?key 浠嶅彲閫氳繃 `.env` 鏂囦欢鎴栧鍏?瀵煎嚭鑳藉姏淇濈暀鍜岀淮鎶ゃ€?
 
-例外：`LLM_CHANNELS` 声明的动态渠道详情键（如 `LLM_DEEPSEEK_API_KEY`、`LLM_MY_PROXY_MODELS`）会保留在配置接口返回中，供“AI 模型接入”编辑器读取和保存；它们不作为普通配置卡片展示，也不复用 `WEB_SETTINGS_HIDDEN_FROM_UI` 的运维隐藏语义。
+渚嬪锛歚LLM_CHANNELS` 澹版槑鐨勫姩鎬佹笭閬撹鎯呴敭锛堝 `LLM_DEEPSEEK_API_KEY`銆乣LLM_MY_PROXY_MODELS`锛変細淇濈暀鍦ㄩ厤缃帴鍙ｈ繑鍥炰腑锛屼緵鈥淎I 妯″瀷鎺ュ叆鈥濈紪杈戝櫒璇诲彇鍜屼繚瀛橈紱瀹冧滑涓嶄綔涓烘櫘閫氶厤缃崱鐗囧睍绀猴紝涔熶笉澶嶇敤 `WEB_SETTINGS_HIDDEN_FROM_UI` 鐨勮繍缁撮殣钘忚涔夈€?
 
-暂不纳入 Web 设置页展示的低频/运维类 `.env` 变量包括 `DATABASE_PATH`、`SQLITE_*`、`USE_PROXY`、`PROXY_HOST`、`PROXY_PORT` 等。若后续需要在 Web 中编辑这些字段，应先在 `src/core/config_registry.py` 中正式注册并补齐 help 元数据，而不是依赖自动推断。
+鏆備笉绾冲叆 Web 璁剧疆椤靛睍绀虹殑浣庨/杩愮淮绫?`.env` 鍙橀噺鍖呮嫭 `DATABASE_PATH`銆乣SQLITE_*`銆乣USE_PROXY`銆乣PROXY_HOST`銆乣PROXY_PORT` 绛夈€傝嫢鍚庣画闇€瑕佸湪 Web 涓紪杈戣繖浜涘瓧娈碉紝搴斿厛鍦?`src/core/config_registry.py` 涓寮忔敞鍐屽苟琛ラ綈 help 鍏冩暟鎹紝鑰屼笉鏄緷璧栬嚜鍔ㄦ帹鏂€?
 
-### 覆盖边界
+### 瑕嗙洊杈圭晫
 
-- `settingsHelp.ts` 中的 `settings.llm_channel.*` 系列为 LLM 渠道编辑器内部字段说明，仅用于前端渲染，不对应 `.env` 的单独配置项；这是 PR2 中刻意的“内置扩展”设计，用于提升编辑器可用性。
-- 其余 help 文案均应能从 `src/core/config_registry.py` 中某个字段的 `help_key` 映射到后端注册元数据，便于与文档源、`warning_codes` 一起统一维护。
+- `settingsHelp.ts` 涓殑 `settings.llm_channel.*` 绯诲垪涓?LLM 娓犻亾缂栬緫鍣ㄥ唴閮ㄥ瓧娈佃鏄庯紝浠呯敤浜庡墠绔覆鏌擄紝涓嶅搴?`.env` 鐨勫崟鐙厤缃」锛涜繖鏄?PR2 涓埢鎰忕殑鈥滃唴缃墿灞曗€濊璁★紝鐢ㄤ簬鎻愬崌缂栬緫鍣ㄥ彲鐢ㄦ€с€?
+- 鍏朵綑 help 鏂囨鍧囧簲鑳戒粠 `src/core/config_registry.py` 涓煇涓瓧娈电殑 `help_key` 鏄犲皠鍒板悗绔敞鍐屽厓鏁版嵁锛屼究浜庝笌鏂囨。婧愩€乣warning_codes` 涓€璧风粺涓€缁存姢銆?
 
-## 事实源优先级
+## 浜嬪疄婧愪紭鍏堢骇
 
-新增或修改帮助文案时，优先从以下位置核对：
+鏂板鎴栦慨鏀瑰府鍔╂枃妗堟椂锛屼紭鍏堜粠浠ヤ笅浣嶇疆鏍稿锛?
 
-1. `.env.example`：配置键名、默认值、样例格式和敏感占位符。
-2. `docs/full-guide.md`：主要配置说明、运行入口和部署上下文。
-3. `docs/LLM_CONFIG_GUIDE.md`、`docs/llm-providers.md`：LLM 优先级、Channels、provider/model、兼容边界和排障说明。
-4. 专题文档：例如 `docs/bot/feishu-bot-config.md`、`docs/deploy-webui-cloud.md`、`docs/desktop-package.md`。
-5. 代码实现和测试：当文档与代码不一致时，先以可执行实现为准，并同步修正文档。
+1. `.env.example`锛氶厤缃敭鍚嶃€侀粯璁ゅ€笺€佹牱渚嬫牸寮忓拰鏁忔劅鍗犱綅绗︺€?
+2. `docs/full-guide.md`锛氫富瑕侀厤缃鏄庛€佽繍琛屽叆鍙ｅ拰閮ㄧ讲涓婁笅鏂囥€?
+3. `docs/LLM_CONFIG_GUIDE.md`銆乣docs/llm-providers.md`锛歀LM 浼樺厛绾с€丆hannels銆乸rovider/model銆佸吋瀹硅竟鐣屽拰鎺掗殰璇存槑銆?
+4. 涓撻鏂囨。锛氫緥濡?`docs/bot/feishu-bot-config.md`銆乣docs/deploy-webui-cloud.md`銆乣docs/desktop-package.md`銆?
+5. 浠ｇ爜瀹炵幇鍜屾祴璇曪細褰撴枃妗ｄ笌浠ｇ爜涓嶄竴鑷存椂锛屽厛浠ュ彲鎵ц瀹炵幇涓哄噯锛屽苟鍚屾淇鏂囨。銆?
 
-## 维护边界
+## 缁存姢杈圭晫
 
-- 帮助文案不能改变配置保存、校验、运行时优先级、`.env` 写回或环境变量覆盖语义。
-- 不展示真实密钥、账号、token、Webhook 完整值或本机绝对路径。
-- LLM 相关示例如果写入具体 provider 前缀、模型名或 Base URL，必须能追溯到当前仓库文档或官方来源；否则应使用占位符或链接到事实源。
-- 对第三方模型/API 的可用性、LiteLLM 兼容窗口或 provider fallback 规则，不在设置帮助中单独承诺；需要变更时必须同步更新专题文档和 PR 兼容性说明。
-- 中英双语文案应保持同一语义范围。若只更新一种语言，需要在交付说明中写明原因。
-- 首屏短描述保持简洁，详细说明放在 help dialog 中，避免 hover tooltip 与常驻短描述重复。
+- 甯姪鏂囨涓嶈兘鏀瑰彉閰嶇疆淇濆瓨銆佹牎楠屻€佽繍琛屾椂浼樺厛绾с€乣.env` 鍐欏洖鎴栫幆澧冨彉閲忚鐩栬涔夈€?
+- 涓嶅睍绀虹湡瀹炲瘑閽ャ€佽处鍙枫€乼oken銆乄ebhook 瀹屾暣鍊兼垨鏈満缁濆璺緞銆?
+- LLM 鐩稿叧绀轰緥濡傛灉鍐欏叆鍏蜂綋 provider 鍓嶇紑銆佹ā鍨嬪悕鎴?Base URL锛屽繀椤昏兘杩芥函鍒板綋鍓嶄粨搴撴枃妗ｆ垨瀹樻柟鏉ユ簮锛涘惁鍒欏簲浣跨敤鍗犱綅绗︽垨閾炬帴鍒颁簨瀹炴簮銆?
+- 瀵圭涓夋柟妯″瀷/API 鐨勫彲鐢ㄦ€с€丩iteLLM 鍏煎绐楀彛鎴?provider fallback 瑙勫垯锛屼笉鍦ㄨ缃府鍔╀腑鍗曠嫭鎵胯锛涢渶瑕佸彉鏇存椂蹇呴』鍚屾鏇存柊涓撻鏂囨。鍜?PR 鍏煎鎬ц鏄庛€?
+- 涓嫳鍙岃鏂囨搴斾繚鎸佸悓涓€璇箟鑼冨洿銆傝嫢鍙洿鏂颁竴绉嶈瑷€锛岄渶瑕佸湪浜や粯璇存槑涓啓鏄庡師鍥犮€?
+- 棣栧睆鐭弿杩颁繚鎸佺畝娲侊紝璇︾粏璇存槑鏀惧湪 help dialog 涓紝閬垮厤 hover tooltip 涓庡父椹荤煭鎻忚堪閲嶅銆?
 
-## 重启语义
+## 閲嶅惎璇箟
 
-设置页保存通常只写入 `.env` 并触发可运行时重载的配置刷新。帮助文案和 `warning_codes` 必须显式区分以下情况：
+璁剧疆椤典繚瀛橀€氬父鍙啓鍏?`.env` 骞惰Е鍙戝彲杩愯鏃堕噸杞界殑閰嶇疆鍒锋柊銆傚府鍔╂枃妗堝拰 `warning_codes` 蹇呴』鏄惧紡鍖哄垎浠ヤ笅鎯呭喌锛?
 
-- `WEBUI_HOST`、`WEBUI_PORT`：监听地址和端口只在进程启动时绑定，保存后必须重启当前进程、Docker 容器或服务管理器才会生效。
-- `RUN_IMMEDIATELY`：非 schedule 模式启动期单次运行配置，保存后不会让已运行的 WebUI/API 进程立即触发分析。
-- Web 设置页不直接暴露 `SCHEDULE_TIME` / `SCHEDULE_TIMES` / `SCHEDULE_RUN_IMMEDIATELY` 等内部键；用户通过“定时任务”卡片维护启用状态、多个执行时间和立即执行一次。
-- `SCHEDULE_ENABLED`：WebUI/API/Desktop 长运行进程（包括 `python main.py --serve --schedule`）会在保存后按新值启动或停止 runtime scheduler；纯 CLI schedule 模式（`python main.py --schedule`）仍按启动时参数和配置运行。
-- `SCHEDULE_TIME`、`SCHEDULE_TIMES`：不是重启必需项。`SCHEDULE_TIMES` 为空时使用 `SCHEDULE_TIME`；已运行的 scheduler 会按新时间重建 daily jobs。
-- `SCHEDULE_RUN_IMMEDIATELY`：schedule 模式启动行为，保存后不会让当前进程立即执行一次分析；手动执行请使用 runtime scheduler 的 run-now API。
-- runtime scheduler 的 run-now API 只会在没有分析任务运行时接受请求；如果已有分析在执行，会返回忙碌状态，Web 设置页会提示稍后重试。
+- `WEBUI_HOST`銆乣WEBUI_PORT`锛氱洃鍚湴鍧€鍜岀鍙ｅ彧鍦ㄨ繘绋嬪惎鍔ㄦ椂缁戝畾锛屼繚瀛樺悗蹇呴』閲嶅惎褰撳墠杩涚▼銆丏ocker 瀹瑰櫒鎴栨湇鍔＄鐞嗗櫒鎵嶄細鐢熸晥銆?
+- `RUN_IMMEDIATELY`锛氶潪 schedule 妯″紡鍚姩鏈熷崟娆¤繍琛岄厤缃紝淇濆瓨鍚庝笉浼氳宸茶繍琛岀殑 WebUI/API 杩涚▼绔嬪嵆瑙﹀彂鍒嗘瀽銆?
+- Web 璁剧疆椤典笉鐩存帴鏆撮湶 `SCHEDULE_TIME` / `SCHEDULE_TIMES` / `SCHEDULE_RUN_IMMEDIATELY` 绛夊唴閮ㄩ敭锛涚敤鎴烽€氳繃鈥滃畾鏃朵换鍔♀€濆崱鐗囩淮鎶ゅ惎鐢ㄧ姸鎬併€佸涓墽琛屾椂闂村拰绔嬪嵆鎵ц涓€娆°€?
+- `SCHEDULE_ENABLED`锛歐ebUI/API/Desktop 闀胯繍琛岃繘绋嬶紙鍖呮嫭 `python main.py --serve --schedule`锛変細鍦ㄤ繚瀛樺悗鎸夋柊鍊煎惎鍔ㄦ垨鍋滄 runtime scheduler锛涚函 CLI schedule 妯″紡锛坄python main.py --schedule`锛変粛鎸夊惎鍔ㄦ椂鍙傛暟鍜岄厤缃繍琛屻€?
+- `SCHEDULE_TIME`銆乣SCHEDULE_TIMES`锛氫笉鏄噸鍚繀闇€椤广€俙SCHEDULE_TIMES` 涓虹┖鏃朵娇鐢?`SCHEDULE_TIME`锛涘凡杩愯鐨?scheduler 浼氭寜鏂版椂闂撮噸寤?daily jobs銆?
+- `SCHEDULE_RUN_IMMEDIATELY`锛歴chedule 妯″紡鍚姩琛屼负锛屼繚瀛樺悗涓嶄細璁╁綋鍓嶈繘绋嬬珛鍗虫墽琛屼竴娆″垎鏋愶紱鎵嬪姩鎵ц璇蜂娇鐢?runtime scheduler 鐨?run-now API銆?
+- runtime scheduler 鐨?run-now API 鍙細鍦ㄦ病鏈夊垎鏋愪换鍔¤繍琛屾椂鎺ュ彈璇锋眰锛涘鏋滃凡鏈夊垎鏋愬湪鎵ц锛屼細杩斿洖蹇欑鐘舵€侊紝Web 璁剧疆椤典細鎻愮ず绋嶅悗閲嶈瘯銆?

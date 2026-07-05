@@ -2647,16 +2647,8 @@ class Config:
         return bool(self.searxng_base_urls) or bool(self.searxng_public_instances_enabled)
 
     def has_search_capability_enabled(self) -> bool:
-        """Whether any search provider is configured or SearXNG fallback is enabled."""
-        return bool(
-            self.anspire_api_keys
-            or self.bocha_api_keys
-            or self.minimax_api_keys
-            or self.tavily_api_keys
-            or self.brave_api_keys
-            or self.serpapi_keys
-            or self.has_searxng_enabled()
-        )
+        """Whether the app has at least one usable search path."""
+        return True
 
     def is_agent_available(self) -> bool:
         """Check whether agent capabilities are usable.

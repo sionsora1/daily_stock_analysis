@@ -9,3 +9,13 @@ search:
   formats:
     - html
     - json
+
+engines:
+  - name: chinaso news
+    engine: chinaso
+    shortcut: chinaso
+    categories:
+      - general
+      - news
+    chinaso_news_source: all
+    inactive: false

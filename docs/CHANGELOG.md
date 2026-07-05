@@ -8,7 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/ZhuLinsen/daily_stock_analysis/releases) page.
 
 ## [Unreleased]
+- [鏀硅繘] Added a built-in 360 News direct search provider so Chinese news discovery can work without API keys or a proxy.
 - [改进] SearXNG sidecar no longer hard-codes a local `7890` proxy; proxy behavior is driven by the environment, and it connects directly when none is configured.
+- [改进] SearXNG sidecar now enables the `chinaso` news engine to improve direct-access Chinese news discovery.
 - [改进] Added a bundled local SearXNG sidecar in Docker Compose so the project can start its own JSON search endpoint alongside the app.
 - [改进] 新闻搜索优先使用本地 SearXNG 实例，Tavily 作为备用回退。
 - [修复] Web 持仓页首屏快照改用 `include_realtime=false` 快速估值，跳过逐票实时行情预取后先展示持仓列表，避免外部实时行情源变慢时长时间空白等待。

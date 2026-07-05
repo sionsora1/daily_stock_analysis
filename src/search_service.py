@@ -15,13 +15,14 @@ import logging
 import re
 import threading
 import time
+from html import unescape as html_unescape
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from typing import List, Dict, Any, Optional, Tuple
 from itertools import cycle
-from urllib.parse import parse_qsl, unquote, urlparse
+from urllib.parse import parse_qsl, unquote, urljoin, urlparse
 import requests
 from newspaper import Article, Config
 from tenacity import (
@@ -1696,6 +1697,164 @@ class BraveSearchProvider(BaseSearchProvider):
         )
 
 
+class So360NewsSearchProvider(BaseSearchProvider):
+    """360 新闻直连搜索，不依赖 API key。"""
+
+    BASE_URL = "https://news.so.com/ns"
+    REQUEST_TIMEOUT_SECONDS = 8
+
+    def __init__(self) -> None:
+        super().__init__([], "360 News")
+
+    @property
+    def is_available(self) -> bool:
+        return True
+
+    @staticmethod
+    def _extract_domain(url: str) -> str:
+        try:
+            parsed = urlparse(url)
+            return parsed.netloc.replace("www.", "") or "未知来源"
+        except Exception:
+            return "未知来源"
+
+    @staticmethod
+    def _normalize_text(value: Optional[str]) -> str:
+        text = html_unescape((value or "").strip())
+        return re.sub(r"\s+", " ", text).strip()
+
+    @staticmethod
+    def _parse_http_error(response) -> str:
+        try:
+            raw_text = getattr(response, "text", "")
+            body = raw_text.strip() if isinstance(raw_text, str) else ""
+            return body[:200] if body else f"HTTP {response.status_code}"
+        except Exception:
+            return f"HTTP {response.status_code}"
+
+    def _do_search(self, query: str, api_key: str, max_results: int, days: int = 7) -> SearchResponse:
+        del api_key, days
+
+        headers = {
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/126.0.0.0 Safari/537.36"
+            ),
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+            "Referer": "https://news.so.com/",
+        }
+
+        try:
+            response = _get_with_retry(
+                self.BASE_URL,
+                headers=headers,
+                params={"q": query},
+                timeout=self.REQUEST_TIMEOUT_SECONDS,
+            )
+        except requests.exceptions.RequestException as exc:
+            return SearchResponse(
+                query=query,
+                results=[],
+                provider=self.name,
+                success=False,
+                error_message=str(exc),
+            )
+
+        if response.status_code != 200:
+            return SearchResponse(
+                query=query,
+                results=[],
+                provider=self.name,
+                success=False,
+                error_message=f"HTTP {response.status_code}: {self._parse_http_error(response)}",
+            )
+
+        try:
+            from lxml import html as lxml_html
+        except ImportError:
+            return SearchResponse(
+                query=query,
+                results=[],
+                provider=self.name,
+                success=False,
+                error_message="lxml 未安装，无法解析 360 新闻 HTML",
+            )
+
+        try:
+            document = lxml_html.fromstring(response.content)
+            items = document.xpath(
+                "//ul[@id='news']/li[contains(concat(' ', normalize-space(@class), ' '), ' res-list ')]"
+            )
+            results: List[SearchResult] = []
+
+            for item in items:
+                anchor_nodes = item.xpath(".//a[1]")
+                anchor = anchor_nodes[0] if anchor_nodes else None
+                href = self._normalize_text(item.get("data-url"))
+                title = ""
+                snippet = ""
+                published_date: Optional[str] = None
+
+                if anchor is not None:
+                    href = href or self._normalize_text(anchor.get("href"))
+                    title = self._normalize_text(anchor.get("title"))
+                    if not title:
+                        title = self._normalize_text(" ".join(anchor.xpath(".//h3//text()")))
+                    if not title:
+                        title = self._normalize_text(" ".join(anchor.xpath(".//text()")))
+
+                if href:
+                    href = urljoin(self.BASE_URL, href)
+                if not href or not title:
+                    continue
+
+                snippet_nodes = item.xpath(".//p[contains(concat(' ', normalize-space(@class), ' '), ' summary ')]//text()")
+                if snippet_nodes:
+                    snippet = self._normalize_text(" ".join(snippet_nodes))
+                if not snippet:
+                    snippet = self._normalize_text(" ".join(item.xpath(".//p//text()")))
+
+                time_nodes = item.xpath(".//span[contains(concat(' ', normalize-space(@class), ' '), ' time ')]//text()")
+                if time_nodes:
+                    published_date = self._normalize_text(" ".join(time_nodes)) or None
+
+                results.append(
+                    SearchResult(
+                        title=title,
+                        snippet=snippet[:500],
+                        url=href,
+                        source=self._extract_domain(href),
+                        published_date=published_date,
+                    )
+                )
+                if len(results) >= max_results:
+                    break
+
+            return SearchResponse(
+                query=query,
+                results=results,
+                provider=self.name,
+                success=True,
+            )
+        except Exception as exc:
+            logger.warning("[360 News] 解析新闻结果失败: %s", exc)
+            return SearchResponse(
+                query=query,
+                results=[],
+                provider=self.name,
+                success=False,
+                error_message=str(exc),
+            )
+
+    def search(self, query: str, max_results: int = 5, days: int = 7) -> SearchResponse:
+        """Execute the direct 360 search without API keys."""
+        start_time = time.time()
+        response = self._do_search(query, "", max_results, days=days)
+        response.search_time = time.time() - start_time
+        return response
+
+
 class SearXNGSearchProvider(BaseSearchProvider):
     """
     SearXNG search engine (self-hosted, no quota).
@@ -2325,8 +2484,12 @@ class SearchService:
         if minimax_keys:
             self._providers.append(MiniMaxSearchProvider(minimax_keys))
             logger.info(f"已配置 MiniMax 搜索，共 {len(minimax_keys)} 个 API Key")
+        # 6. 360 ???????? API Key????????????
+        self._providers.append(So360NewsSearchProvider())
+        logger.info("??? 360 ??????")
 
-        # 6. SearXNG（自建实例优先；未配置时可自动发现公共实例）
+
+        # 7. SearXNG??????????????????????
         searxng_provider = SearXNGSearchProvider(
             searxng_base_urls,
             use_public_instances=bool(searxng_public_instances_enabled and not searxng_base_urls),
@@ -2338,7 +2501,7 @@ class SearchService:
             else:
                 logger.info("已启用 SearXNG 公共实例自动发现模式")
 
-        # 7. Anspire Search（实时智能搜索优化）
+        # 8. Anspire Search??????????
         if anspire_keys:
             self._providers.insert(0, AnspireSearchProvider(anspire_keys))
             logger.info(f"已配置 Anspire Search 搜索，共 {len(anspire_keys)} 个 API Key")
@@ -2365,12 +2528,16 @@ class SearchService:
         prioritized: List[BaseSearchProvider] = []
         searxng_provider: Optional[BaseSearchProvider] = None
         tavily_provider: Optional[BaseSearchProvider] = None
+        direct_chinese_provider: Optional[BaseSearchProvider] = None
 
         for provider in self._providers:
             if not provider.is_available:
                 continue
             if isinstance(provider, SearXNGSearchProvider):
                 searxng_provider = provider
+                continue
+            if isinstance(provider, So360NewsSearchProvider):
+                direct_chinese_provider = provider
                 continue
             if isinstance(provider, TavilySearchProvider):
                 tavily_provider = provider
@@ -2379,12 +2546,17 @@ class SearchService:
 
         if searxng_provider is not None:
             prioritized.insert(0, searxng_provider)
-        if tavily_provider is not None:
+        if direct_chinese_provider is not None:
             insert_at = 1 if prioritized and isinstance(prioritized[0], SearXNGSearchProvider) else 0
+            prioritized.insert(insert_at, direct_chinese_provider)
+        if tavily_provider is not None:
+            if prioritized and isinstance(prioritized[0], SearXNGSearchProvider):
+                insert_at = 2 if len(prioritized) > 1 and isinstance(prioritized[1], So360NewsSearchProvider) else 1
+            else:
+                insert_at = 1 if prioritized and isinstance(prioritized[0], So360NewsSearchProvider) else 0
             prioritized.insert(insert_at, tavily_provider)
 
         return prioritized
-
     @staticmethod
     def _is_foreign_stock(stock_code: str) -> bool:
         """判断是否为港股或美股"""
