@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
 ===================================
 TushareFetcher - 备用数据源 1 (Priority 2)
@@ -1147,34 +1147,51 @@ class TushareFetcher(BaseFetcher):
             return None
         
         try:
-            # 19点之后才有当天数据
-            start_date = self.get_trade_time(early_time='00:00', late_time='19:00') 
-            if not start_date:
-                return None
-
             ts_code = self._convert_stock_code(stock_code)
+            china_now = self._get_china_now()
+            candidate_dates: List[str] = []
 
-            df = self._call_api_with_rate_limit(
-                "cyq_chips",
-                ts_code=ts_code,
-                start_date=start_date,
-                end_date=start_date,
-            )
-            if df is not None and not df.empty:
+            # 避开 trade_cal 频控，直接探测最近几个工作日。
+            for offset in range(0, 10):
+                candidate = china_now - timedelta(days=offset)
+                if candidate.weekday() >= 5:
+                    continue
+                trade_date = candidate.strftime("%Y%m%d")
+                if trade_date not in candidate_dates:
+                    candidate_dates.append(trade_date)
+
+            for trade_date in candidate_dates:
+                logger.info("[Tushare] 尝试获取 %s 筹码分布，trade_date=%s", stock_code, trade_date)
+
+                df = self._call_api_with_rate_limit(
+                    "cyq_chips",
+                    ts_code=ts_code,
+                    start_date=trade_date,
+                    end_date=trade_date,
+                )
+                if df is None or df.empty:
+                    continue
+
                 daily_df = self._call_api_with_rate_limit(
                     "daily",
                     ts_code=ts_code,
-                    start_date=start_date,
-                    end_date=start_date,
+                    start_date=trade_date,
+                    end_date=trade_date,
                 )
                 if daily_df is None or daily_df.empty:
-                    return None
+                    logger.info(
+                        "[Tushare] %s 在 %s 拿到筹码明细，但未拿到日线收盘价，继续尝试更早日期",
+                        stock_code,
+                        trade_date,
+                    )
+                    continue
+
                 current_price = daily_df.iloc[0]['close']
                 metrics = self.compute_cyq_metrics(df, current_price)
 
                 chip = ChipDistribution(
                     code=stock_code,
-                    date=datetime.strptime(start_date, '%Y%m%d').strftime('%Y-%m-%d'),
+                    date=datetime.strptime(trade_date, '%Y%m%d').strftime('%Y-%m-%d'),
                     profit_ratio=metrics['获利比例'],
                     avg_cost=metrics['平均成本'],
                     cost_90_low=metrics['90成本-低'],
@@ -1190,10 +1207,11 @@ class TushareFetcher(BaseFetcher):
                         f"70%集中度={chip.concentration_70:.2%}")
                 return chip
 
+            logger.info("[Tushare] 最近可探测日期内未获取到 %s 的筹码分布数据", stock_code)
+
         except Exception as e:
             logger.warning(f"[Tushare] 获取筹码分布失败 {stock_code}: {e}")
             return None
-
     def compute_cyq_metrics(self, df: pd.DataFrame, current_price: float) -> dict:
         """
         基于 Tushare 的筹码分布明细表 (cyq_chips) 计算常用筹码指标  
@@ -1324,3 +1342,4 @@ if __name__ == "__main__":
             print("未获取到行业板块排名数据")
     except Exception as e:
         print(f"[行业板块排名] 获取失败: {e}")
+

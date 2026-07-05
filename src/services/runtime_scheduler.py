@@ -141,7 +141,7 @@ class RuntimeSchedulerService:
         self._last_skipped_at: Optional[str] = None
         self._last_skip_reason: Optional[str] = None
 
-    def _make_schedule_args(self) -> SimpleNamespace:
+    def _make_schedule_args(self, *, force_run_override: Optional[bool] = None) -> SimpleNamespace:
         defaults = {
             "schedule": True,
             "no_run_immediately": True,
@@ -158,6 +158,8 @@ class RuntimeSchedulerService:
             "workers": None,
         }
         defaults.update(self._schedule_args_overrides)
+        if force_run_override is not None:
+            defaults["force_run"] = bool(force_run_override)
         return SimpleNamespace(**defaults)
 
     def _reload_config(self) -> Config:
@@ -170,7 +172,12 @@ class RuntimeSchedulerService:
         self._last_skip_reason = "analysis_already_running"
         logger.warning("Runtime scheduler skipped run: analysis already running")
 
-    def _run_analysis_locked(self, stock_codes: Optional[List[str]]) -> None:
+    def _run_analysis_locked(
+        self,
+        stock_codes: Optional[List[str]],
+        *,
+        force_run: Optional[bool] = None,
+    ) -> None:
         try:
             config = self._reload_config()
             runner = self._task_runner
@@ -179,7 +186,11 @@ class RuntimeSchedulerService:
 
                 runner = run_scheduled_analysis
             self._last_run_at = datetime.now().isoformat()
-            result = runner(config, self._make_schedule_args(), stock_codes)
+            result = runner(
+                config,
+                self._make_schedule_args(force_run_override=force_run),
+                stock_codes,
+            )
             if result is False:
                 raise RuntimeError("runtime scheduled analysis reported failure")
             self._last_success_at = datetime.now().isoformat()
@@ -330,7 +341,7 @@ class RuntimeSchedulerService:
         else:
             self.stop()
 
-    def run_now(self) -> Dict[str, Any]:
+    def run_now(self, *, force_run: bool = False) -> Dict[str, Any]:
         if not self._run_lock.acquire(blocking=False):
             self._record_analysis_busy_skip()
             return {
@@ -341,7 +352,7 @@ class RuntimeSchedulerService:
 
         def run_and_release() -> None:
             try:
-                self._run_analysis_locked(None)
+                self._run_analysis_locked(None, force_run=force_run)
             finally:
                 self._run_lock.release()
 

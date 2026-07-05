@@ -64,10 +64,14 @@ def get_scheduler_status(
     description="Trigger one scheduled analysis run in the current process.",
 )
 def run_scheduler_now(
+    force_run: bool = Query(
+        False,
+        description="Whether to bypass non-trading-day skips for this run-now request.",
+    ),
     scheduler: RuntimeSchedulerService = Depends(get_runtime_scheduler_service),
 ) -> dict:
     """Trigger one runtime scheduled analysis run."""
-    result = scheduler.run_now()
+    result = scheduler.run_now(force_run=force_run)
     if not result.get("accepted", False):
         raise HTTPException(
             status_code=409,

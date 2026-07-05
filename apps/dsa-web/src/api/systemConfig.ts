@@ -222,8 +222,12 @@ export const systemConfigApi = {
     return toCamelCase<SchedulerStatusResponse>(response.data);
   },
 
-  async runSchedulerNow(): Promise<SchedulerRunNowResponse> {
-    const response = await apiClient.post<Record<string, unknown>>('/api/v1/system/scheduler/run-now');
+  async runSchedulerNow(forceRun = true): Promise<SchedulerRunNowResponse> {
+    const response = await apiClient.post<Record<string, unknown>>(
+      '/api/v1/system/scheduler/run-now',
+      undefined,
+      { params: { force_run: forceRun } },
+    );
     return toCamelCase<SchedulerRunNowResponse>(response.data);
   },
 
