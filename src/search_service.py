@@ -2552,8 +2552,10 @@ class SearchService:
         if tavily_provider is not None:
             if prioritized and isinstance(prioritized[0], SearXNGSearchProvider):
                 insert_at = 2 if len(prioritized) > 1 and isinstance(prioritized[1], So360NewsSearchProvider) else 1
+            elif prioritized and isinstance(prioritized[0], So360NewsSearchProvider):
+                insert_at = 1
             else:
-                insert_at = 1 if prioritized and isinstance(prioritized[0], So360NewsSearchProvider) else 0
+                insert_at = 0
             prioritized.insert(insert_at, tavily_provider)
 
         return prioritized
@@ -4281,7 +4283,28 @@ class SearchService:
             
             provider = available_providers[provider_index % len(available_providers)]
             provider_index += 1
-            
+
+            # Public SearXNG instances are a fragile fallback and often rate-limit
+            # stock-news queries. Keep them available for direct stock search, but
+            # let Tavily handle the "latest_news" dimension when the selected
+            # SearXNG provider is auto-discovered rather than self-hosted.
+            if (
+                dim["name"] == "latest_news"
+                and isinstance(provider, SearXNGSearchProvider)
+                and getattr(provider, "_use_public_instances", False)
+            ):
+                tavily_provider = next(
+                    (
+                        candidate
+                        for candidate in available_providers
+                        if isinstance(candidate, TavilySearchProvider)
+                        and candidate.is_available
+                    ),
+                    None,
+                )
+                if tavily_provider is not None:
+                    provider = tavily_provider
+
             request_days = (
                 self.ANALYTICAL_INTEL_LOOKBACK_DAYS
                 if dim['name'] in self.ANALYTICAL_INTEL_DIMENSIONS
