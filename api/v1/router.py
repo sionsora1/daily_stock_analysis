@@ -22,6 +22,7 @@ from api.v1.endpoints import (
     health,
     history,
     intelligence,
+    intraday_monitor,
     portfolio,
     stocks,
     system_config,
@@ -90,6 +91,12 @@ router.include_router(
     alerts.router,
     prefix="/alerts",
     tags=["Alerts"]
+)
+
+router.include_router(
+    intraday_monitor.router,
+    prefix="/intraday-monitor",
+    tags=["IntradayMonitor"]
 )
 
 router.include_router(

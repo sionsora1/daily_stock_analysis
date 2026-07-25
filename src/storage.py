@@ -980,6 +980,49 @@ class AlertCooldownRecord(Base):
     )
 
 
+class IntradayMonitorPlanRecord(Base):
+    """Reusable event-driven intraday composite monitor plan."""
+
+    __tablename__ = 'intraday_monitor_plans'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(128), nullable=False)
+    event_symbol = Column(String(16), nullable=False, index=True)
+    sector_symbol = Column(String(16), nullable=False, index=True)
+    monitored_symbols = Column(Text, nullable=False, default='[]')
+    majority_ratio = Column(Float, nullable=False, default=0.6)
+    initial_time = Column(String(8), nullable=False, default='10:00')
+    confirm_time = Column(String(8), nullable=False, default='10:30')
+    poll_interval_seconds = Column(Integer, nullable=False, default=30)
+    listing_day_mode = Column(Boolean, nullable=False, default=False)
+    start_date = Column(Date, index=True)
+    end_date = Column(Date, index=True)
+    enabled = Column(Boolean, nullable=False, default=True, index=True)
+    paused = Column(Boolean, nullable=False, default=False, index=True)
+    current_status = Column(String(32), nullable=False, default='observe', index=True)
+    current_snapshot = Column(Text)
+    last_evaluated_at = Column(DateTime, index=True)
+    created_at = Column(DateTime, default=datetime.now, index=True)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now, index=True)
+
+
+class IntradayMonitorHistoryRecord(Base):
+    """Status transition history for an intraday monitor plan."""
+
+    __tablename__ = 'intraday_monitor_history'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    plan_id = Column(Integer, nullable=False, index=True)
+    status = Column(String(32), nullable=False, index=True)
+    reason = Column(Text)
+    values_json = Column(Text)
+    created_at = Column(DateTime, default=datetime.now, nullable=False, index=True)
+
+    __table_args__ = (
+        Index('ix_intraday_monitor_history_plan_time', 'plan_id', 'created_at'),
+    )
+
+
 class DecisionSignalRecord(Base):
     """Persisted AI decision signal asset for Issue #1390 P1."""
 
