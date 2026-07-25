@@ -159,6 +159,7 @@ from api.v1.schemas.common import HealthResponse
 from src.auth import is_auth_enabled
 from src.data.stock_index_loader import find_existing_stock_index_path
 from src.services.system_config_service import SystemConfigService
+from src.services.intraday_monitor_service import IntradayMonitorService
 from src.services.runtime_scheduler import (
     CLI_SCHEDULER_OWNER_ENV,
     RUNTIME_SCHEDULER_ARGS_ENV,
@@ -277,10 +278,22 @@ async def app_lifespan(app: FastAPI):
     app.state.system_config_service = SystemConfigService(
         runtime_scheduler=app.state.runtime_scheduler_service,
     )
+    intraday_monitor_service = IntradayMonitorService()
+    app.state.intraday_monitor_service = intraday_monitor_service
+    app.state.intraday_monitor_task = asyncio.create_task(
+        intraday_monitor_service.run_forever()
+    )
     _schedule_stock_index_background_refresh(app, "startup")
     try:
         yield
     finally:
+        monitor_task = getattr(app.state, "intraday_monitor_task", None)
+        if monitor_task is not None and not monitor_task.done():
+            monitor_task.cancel()
+            with suppress(asyncio.CancelledError):
+                await monitor_task
+        if hasattr(app.state, "intraday_monitor_service"):
+            delattr(app.state, "intraday_monitor_service")
         refresh_task = getattr(app.state, "stock_index_refresh_task", None)
         if refresh_task is not None and not refresh_task.done():
             refresh_task.cancel()
