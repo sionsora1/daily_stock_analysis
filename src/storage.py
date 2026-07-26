@@ -61,7 +61,7 @@ from src.utils.sniper_points import extract_sniper_points, parse_sniper_value
 
 logger = logging.getLogger(__name__)
 T = TypeVar("T")
-CURRENT_SCHEMA_VERSION = "2026-06-05-create-all-baseline"
+CURRENT_SCHEMA_VERSION = "2026-07-26-ai-chain-model-baseline"
 INTELLIGENCE_ITEM_NULL_SCOPE_VALUE = "__dsa_null_scope__"
 
 # SQLAlchemy ORM 基类
@@ -1141,6 +1141,148 @@ class DecisionSignalFeedbackRecord(Base):
     source = Column(String(16), nullable=False, default='api', index=True)
     created_at = Column(DateTime, default=utc_naive_now, index=True)
     updated_at = Column(DateTime, default=utc_naive_now, onupdate=utc_naive_now, index=True)
+
+
+# === AI-chain relative-strength model tables ===
+# These records are intentionally independent from the existing LLM-oriented
+# BacktestResult / BacktestSummary history.  They provide an auditable store
+# for deterministic daily model runs and later walk-forward backtests.
+
+
+class AiChainUniverseMember(Base):
+    """Versioned constituent classification for the AI-chain model universe."""
+
+    __tablename__ = "ai_chain_universe_members"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    universe_version = Column(String(64), nullable=False, index=True)
+    code = Column(String(10), nullable=False, index=True)
+    name = Column(String(64), nullable=False)
+    group_name = Column(String(32), nullable=False, index=True)
+    tier = Column(String(32), nullable=False, index=True)
+    hardware_subgroup = Column(String(64), nullable=True, index=True)
+    effective_from = Column(Date, nullable=False, index=True)
+    effective_to = Column(Date, nullable=True, index=True)
+    evidence_summary = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=utc_naive_now, nullable=False)
+    updated_at = Column(DateTime, default=utc_naive_now, onupdate=utc_naive_now, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "universe_version", "code", "effective_from", name="uix_ai_chain_member_version_code_date"
+        ),
+        Index("ix_ai_chain_member_active", "code", "effective_from", "effective_to"),
+    )
+
+
+class AiChainModelRun(Base):
+    """One deterministic end-of-day AI-chain scoring attempt."""
+
+    __tablename__ = "ai_chain_model_runs"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    as_of_date = Column(Date, nullable=False, index=True)
+    model_version = Column(String(64), nullable=False, index=True)
+    status = Column(String(24), nullable=False, index=True)
+    market_gate = Column(String(32), nullable=True)
+    data_coverage = Column(Float, nullable=True)
+    warnings_json = Column(Text, nullable=False, default="[]")
+    model_profile_json = Column(Text, nullable=False, default="{}")
+    data_quality_json = Column(Text, nullable=False, default="{}")
+    failure_reason = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=utc_naive_now, nullable=False, index=True)
+    completed_at = Column(DateTime, nullable=True, index=True)
+
+    __table_args__ = (
+        Index("ix_ai_chain_run_status_date", "status", "as_of_date", "model_version"),
+    )
+
+
+class AiChainModelScore(Base):
+    """Per-stock factor and recommendation snapshot belonging to a model run."""
+
+    __tablename__ = "ai_chain_model_scores"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    run_id = Column(
+        Integer,
+        ForeignKey("ai_chain_model_runs.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    code = Column(String(10), nullable=False, index=True)
+    name = Column(String(64), nullable=False)
+    group_name = Column(String(32), nullable=False, index=True)
+    hardware_subgroup = Column(String(64), nullable=True, index=True)
+    tier = Column(String(32), nullable=False, index=True)
+    factor_snapshot_json = Column(Text, nullable=False, default="{}")
+    quality_snapshot_json = Column(Text, nullable=False, default="{}")
+    probability_up = Column(Float, nullable=True)
+    probability_outperform = Column(Float, nullable=True)
+    expected_return = Column(Float, nullable=True)
+    return_low = Column(Float, nullable=True)
+    return_high = Column(Float, nullable=True)
+    drawdown_risk = Column(Float, nullable=True)
+    action = Column(String(32), nullable=False)
+    rank = Column(Integer, nullable=False, index=True)
+    suggested_weight = Column(Float, nullable=True)
+    created_at = Column(DateTime, default=utc_naive_now, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("run_id", "code", name="uix_ai_chain_score_run_code"),
+        Index("ix_ai_chain_score_run_rank", "run_id", "rank"),
+    )
+
+
+class AiChainPortfolioBacktestRun(Base):
+    """Parameters and aggregate outcome of one walk-forward portfolio backtest."""
+
+    __tablename__ = "ai_chain_portfolio_backtest_runs"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    model_version = Column(String(64), nullable=False, index=True)
+    status = Column(String(24), nullable=False, default="running", index=True)
+    start_date = Column(Date, nullable=False, index=True)
+    end_date = Column(Date, nullable=False, index=True)
+    parameters_json = Column(Text, nullable=False, default="{}")
+    cost_model_json = Column(Text, nullable=False, default="{}")
+    benchmarks_json = Column(Text, nullable=False, default="{}")
+    metrics_json = Column(Text, nullable=False, default="{}")
+    failure_reason = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=utc_naive_now, nullable=False, index=True)
+    completed_at = Column(DateTime, nullable=True, index=True)
+
+
+class AiChainPortfolioBacktestPoint(Base):
+    """One rebalance, holding, or rejection record within a portfolio backtest."""
+
+    __tablename__ = "ai_chain_portfolio_backtest_points"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    backtest_run_id = Column(
+        Integer,
+        ForeignKey("ai_chain_portfolio_backtest_runs.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    sequence = Column(Integer, nullable=False)
+    rebalance_date = Column(Date, nullable=False, index=True)
+    code = Column(String(10), nullable=True, index=True)
+    event_type = Column(String(32), nullable=False, default="rebalance")
+    suggested_weight = Column(Float, nullable=True)
+    realized_weight = Column(Float, nullable=True)
+    trade_cost = Column(Float, nullable=True)
+    portfolio_value = Column(Float, nullable=True)
+    ai_benchmark_value = Column(Float, nullable=True)
+    broad_benchmark_value = Column(Float, nullable=True)
+    rejection_reason = Column(Text, nullable=True)
+    detail_json = Column(Text, nullable=False, default="{}")
+    created_at = Column(DateTime, default=utc_naive_now, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("backtest_run_id", "sequence", name="uix_ai_chain_backtest_point_sequence"),
+        Index("ix_ai_chain_backtest_point_page", "backtest_run_id", "sequence"),
+    )
 
 
 class _DatabaseManagerMeta(type):
