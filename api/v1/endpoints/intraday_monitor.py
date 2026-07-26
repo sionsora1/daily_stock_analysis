@@ -175,7 +175,7 @@ def simulate_plan(plan_id: int) -> Dict[str, Any]:
 def evaluate_now() -> IntradayMonitorPlanListResponse:
     try:
         service = _service()
-        service.run_cycle()
+        service.run_cycle(force=True)
         items = service.list_plans()
         return IntradayMonitorPlanListResponse(items=items, total=len(items))
     except Exception as exc:
