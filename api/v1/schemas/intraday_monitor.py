@@ -9,11 +9,21 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
 
+class IntradayRepresentativeGroup(BaseModel):
+    """Predefined upstream industry-role representatives for one monitor plan."""
+
+    key: str = Field(..., min_length=1, max_length=48)
+    label: str = Field(..., min_length=1, max_length=32)
+    core_symbols: List[str] = Field(..., min_length=1)
+    backup_symbols: List[str] = Field(default_factory=list)
+
+
 class IntradayMonitorPlanCreateRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=128)
     event_symbol: str = Field(..., min_length=1, max_length=16)
     sector_symbol: str = Field(..., min_length=1, max_length=16)
     monitored_symbols: List[str] = Field(..., min_length=1)
+    representative_groups: Optional[List[IntradayRepresentativeGroup]] = None
     majority_ratio: float = Field(0.6, gt=0, le=1)
     initial_time: str = Field("10:00", min_length=4, max_length=8)
     confirm_time: str = Field("10:30", min_length=4, max_length=8)
@@ -30,6 +40,7 @@ class IntradayMonitorPlanUpdateRequest(BaseModel):
     event_symbol: Optional[str] = Field(None, min_length=1, max_length=16)
     sector_symbol: Optional[str] = Field(None, min_length=1, max_length=16)
     monitored_symbols: Optional[List[str]] = Field(None, min_length=1)
+    representative_groups: Optional[List[IntradayRepresentativeGroup]] = None
     majority_ratio: Optional[float] = Field(None, gt=0, le=1)
     initial_time: Optional[str] = Field(None, min_length=4, max_length=8)
     confirm_time: Optional[str] = Field(None, min_length=4, max_length=8)
@@ -47,6 +58,8 @@ class IntradayMonitorPlanResponse(BaseModel):
     event_symbol: str
     sector_symbol: str
     monitored_symbols: List[str]
+    representative_groups: List[IntradayRepresentativeGroup] = Field(default_factory=list)
+    representative_groups_source: str = "none"
     majority_ratio: float
     required_count: int
     initial_time: str

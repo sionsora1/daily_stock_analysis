@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Activity, Pause, Play, RefreshCw, Save, Settings2, ShieldAlert, Zap } from 'lucide-react';
+import { Activity, Pause, Play, Plus, RefreshCw, Save, Settings2, ShieldAlert, X, Zap } from 'lucide-react';
 import { intradayMonitorApi } from '../api/intradayMonitor';
 import { getParsedApiError } from '../api/error';
 import { AppPage, Button, Card, InlineAlert, Loading, PageHeader, StatCard } from '../components/common';
@@ -9,6 +9,7 @@ import type {
   IntradayMonitorInstrument,
   IntradayMonitorPlan,
   IntradayMonitorPlanPayload,
+  IntradayRepresentativeGroup,
   IntradayMonitorStatus,
   IntradaySimulationResult,
 } from '../types/intradayMonitor';
@@ -19,11 +20,18 @@ const DEFAULT_SYMBOLS = [
   '688019', '300054', '300666', '688126', '688268', '688106', '605358',
 ];
 
+const DEFAULT_REPRESENTATIVE_GROUPS: IntradayRepresentativeGroup[] = [
+  { key: 'equipment', label: '设备', core_symbols: ['002371', '603690'], backup_symbols: ['603283', '603929', '603163'] },
+  { key: 'components', label: '关键零部件', core_symbols: ['688409', '300260'], backup_symbols: ['688596'] },
+  { key: 'materials', label: '材料', core_symbols: ['603688', '002409', '600206'], backup_symbols: ['603650', '688019', '300054', '300666', '688126', '688268', '688106', '605358'] },
+];
+
 const DEFAULT_FORM: IntradayMonitorPlanPayload = {
   name: '长鑫上市首日综合监控',
   event_symbol: '688825',
   sector_symbol: '159516',
   monitored_symbols: DEFAULT_SYMBOLS,
+  representative_groups: DEFAULT_REPRESENTATIVE_GROUPS,
   majority_ratio: 0.6,
   initial_time: '10:00',
   confirm_time: '10:30',
@@ -66,8 +74,23 @@ function formatTime(value?: string | null): string {
   return value.replace('T', ' ').slice(0, 19);
 }
 
+function quoteFreshness(item?: IntradayMonitorInstrument): { label: string; className: string } {
+  if (!item || item.fields_missing?.length) {
+    return { label: '数据缺失', className: 'text-danger' };
+  }
+  if (item.is_fresh === false || item.freshness === 'stale') {
+    const age = item?.quote_age_seconds == null ? '' : ` · ${item.quote_age_seconds} 秒`;
+    return { label: `行情陈旧${age}`, className: 'text-danger' };
+  }
+  if (item.freshness === 'unknown') {
+    return { label: '时间戳未知', className: 'text-warning' };
+  }
+  const age = item?.quote_age_seconds == null ? '' : ` · ${item.quote_age_seconds} 秒`;
+  return { label: `新鲜${age}`, className: 'text-success' };
+}
+
 function instrumentTone(item?: IntradayMonitorInstrument): 'success' | 'warning' | 'danger' | 'default' {
-  if (!item || item.fields_missing?.length) return 'danger';
+  if (!item || item.fields_missing?.length || item.is_fresh === false) return 'danger';
   if (item.valid) return 'success';
   if (item.above_open) return 'warning';
   return 'danger';
@@ -84,6 +107,7 @@ const InstrumentCard: React.FC<{ title: string; item?: IntradayMonitorInstrument
           {item?.change_pct == null ? '--' : `${item.change_pct >= 0 ? '+' : ''}${formatNumber(item.change_pct)}%`}
         </span>
         <span>成交额 {formatAmount(item?.amount)}</span>
+        <span className={quoteFreshness(item).className}>{quoteFreshness(item).label}</span>
       </span>
     )}
     tone={instrumentTone(item)}
@@ -111,6 +135,10 @@ const IntradayMonitorPage: React.FC = () => {
   const snapshot = selectedPlan?.snapshot;
   const status = statusMeta(snapshot?.status ?? selectedPlan?.current_status);
   const breadth = snapshot?.breadth;
+  const representativeCoverage = snapshot?.representative_coverage;
+  const representativeGroups: Array<IntradayRepresentativeGroup & { valid?: boolean; reason?: string }> = representativeCoverage?.groups
+    ?? selectedPlan?.representative_groups
+    ?? [];
   const MonitorActionIcon = selectedPlan?.paused ? Play : Pause;
 
   const loadPlans = useCallback(async (showSpinner = false) => {
@@ -131,9 +159,10 @@ const IntradayMonitorPage: React.FC = () => {
 
   useEffect(() => {
     void loadPlans(true);
-    const timer = window.setInterval(() => void loadPlans(), 30000);
+    const interval = Math.max(10, selectedPlan?.poll_interval_seconds ?? 30) * 1000;
+    const timer = window.setInterval(() => void loadPlans(), interval);
     return () => window.clearInterval(timer);
-  }, [loadPlans]);
+  }, [loadPlans, selectedPlan?.poll_interval_seconds]);
 
   useEffect(() => {
     if (!selectedPlan || formDirty) return;
@@ -142,6 +171,7 @@ const IntradayMonitorPage: React.FC = () => {
       event_symbol: selectedPlan.event_symbol,
       sector_symbol: selectedPlan.sector_symbol,
       monitored_symbols: selectedPlan.monitored_symbols,
+      representative_groups: selectedPlan.representative_groups,
       majority_ratio: selectedPlan.majority_ratio,
       initial_time: selectedPlan.initial_time,
       confirm_time: selectedPlan.confirm_time,
@@ -230,6 +260,44 @@ const IntradayMonitorPage: React.FC = () => {
     setForm((current) => ({ ...current, [key]: value }));
   };
 
+  const updateRepresentativeGroup = (
+    index: number,
+    field: 'label' | 'core_symbols' | 'backup_symbols',
+    value: string | string[],
+  ) => {
+    setFormDirty(true);
+    setForm((current) => ({
+      ...current,
+      representative_groups: current.representative_groups.map((group, groupIndex) => (
+        groupIndex === index ? { ...group, [field]: value } : group
+      )),
+    }));
+  };
+
+  const addRepresentativeGroup = () => {
+    setFormDirty(true);
+    setForm((current) => ({
+      ...current,
+      representative_groups: [
+        ...current.representative_groups,
+        {
+          key: `group_${Date.now()}`,
+          label: '新方向',
+          core_symbols: [],
+          backup_symbols: [],
+        },
+      ],
+    }));
+  };
+
+  const removeRepresentativeGroup = (index: number) => {
+    setFormDirty(true);
+    setForm((current) => ({
+      ...current,
+      representative_groups: current.representative_groups.filter((_, groupIndex) => groupIndex !== index),
+    }));
+  };
+
   if (loading) {
     return <AppPage><Loading /></AppPage>;
   }
@@ -239,7 +307,7 @@ const IntradayMonitorPage: React.FC = () => {
       <PageHeader
         eyebrow="INTRADAY COMPOSITE MONITOR"
         title="盘中综合信号"
-        description="后台每 30 秒采集直连实时行情；长鑫、159516 与监控池三层条件连续两次满足后，才显示确认信号。"
+        description="后台按方案频率采集直连实时行情；确认信号还要求设备、关键零部件、材料至少两个方向有核心代表走强。"
         actions={(
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" size="sm" onClick={() => void loadPlans(true)}><RefreshCw className="h-4 w-4" />刷新</Button>
@@ -274,10 +342,11 @@ const IntradayMonitorPage: React.FC = () => {
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {simulation.steps.filter((step) => ['preliminary', 'confirmed', 'invalidated'].includes(step.status)).map((step) => (
-              <div key={`${step.as_of}-${step.status}`} className="rounded-xl border border-border/60 bg-card/40 px-3 py-3">
-                <div className="flex items-center justify-between gap-2"><span className="text-xs text-secondary-text">{formatTime(step.as_of)}</span><span className={`text-xs ${statusMeta(step.status).className.split(' ').pop()}`}>{statusMeta(step.status).label}</span></div>
-                <div className="mt-2 text-xs text-secondary-text">{step.reason}</div>
-              </div>
+                <div key={`${step.as_of}-${step.status}`} className="rounded-xl border border-border/60 bg-card/40 px-3 py-3">
+                  <div className="flex items-center justify-between gap-2"><span className="text-xs text-secondary-text">{formatTime(step.as_of)}</span><span className={`text-xs ${statusMeta(step.status).className.split(' ').pop()}`}>{statusMeta(step.status).label}</span></div>
+                  <div className="mt-2 text-xs text-secondary-text">{step.reason}</div>
+                  {step.representative_coverage?.enabled ? <div className="mt-2 text-xs text-secondary-text">核心代表覆盖：{step.representative_coverage.strong ?? 0}/{step.representative_coverage.groups?.length ?? 0} 个方向</div> : null}
+                </div>
             ))}
           </div>
         </Card>
@@ -325,7 +394,7 @@ const IntradayMonitorPage: React.FC = () => {
             </div>
           </Card>
 
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <InstrumentCard title={`长鑫科技 ${selectedPlan?.event_symbol ?? ''}`} item={snapshot?.event} />
             <InstrumentCard title={`半导体 ETF ${selectedPlan?.sector_symbol ?? ''}`} item={snapshot?.sector} />
             <StatCard
@@ -335,16 +404,25 @@ const IntradayMonitorPage: React.FC = () => {
               tone={breadth?.valid ? 'success' : 'warning'}
               icon={<ShieldAlert className="h-5 w-5" />}
             />
+            <StatCard
+              label="核心代表覆盖"
+              value={representativeCoverage?.enabled ? `${representativeCoverage.strong ?? 0}/${representativeCoverage.groups?.length ?? 0}` : '未配置'}
+              hint={representativeCoverage?.enabled ? `至少 ${representativeCoverage.required ?? 0} 个产业方向核心走强` : '通用方案不限制产业链方向'}
+              tone={representativeCoverage?.enabled ? (representativeCoverage.valid ? 'success' : 'warning') : 'default'}
+              icon={<ShieldAlert className="h-5 w-5" />}
+            />
           </div>
 
           <Card title="三层触发值" subtitle="不设固定涨幅阈值，观察开盘价与 3 分钟量价结构" padding="lg">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {[
                 ['长鑫高于开盘', snapshot?.trigger_values?.event_above_open],
                 ['ETF 高于开盘', snapshot?.trigger_values?.sector_above_open],
                 ['强势数量', snapshot?.trigger_values?.strong_count],
                 ['最低数量', snapshot?.trigger_values?.required_count],
-                ['连续确认次数', snapshot?.trigger_values?.streak],
+                ['核心代表方向', representativeCoverage?.enabled ? `${String(snapshot?.trigger_values?.representative_strong ?? 0)}/${String(snapshot?.trigger_values?.representative_required ?? 0)}` : '未配置'],
+                ['预热连续次数', snapshot?.trigger_values?.streak],
+                ['确认窗口进度', `${String(snapshot?.trigger_values?.confirm_streak ?? 0)}/${String(snapshot?.trigger_values?.confirm_required ?? 2)}`],
               ].map(([label, value]) => (
                 <div key={String(label)} className="rounded-xl border border-border/60 bg-card/40 px-3 py-3">
                   <div className="text-xs text-secondary-text">{String(label)}</div>
@@ -354,25 +432,47 @@ const IntradayMonitorPage: React.FC = () => {
             </div>
           </Card>
 
+          <Card title="产业链代表性" subtitle="核心名单预先配置，不会因盘中领涨临时替换；备用仅在核心行情不可用时显示" padding="lg">
+            {representativeGroups.length ? (
+              <div className="grid gap-3 md:grid-cols-3">
+                {representativeGroups.map((group) => (
+                  <div key={group.key} className="rounded-xl border border-border/60 bg-card/40 px-3 py-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium text-foreground">{group.label}</span>
+                      <span className={group.valid === true ? 'text-xs text-success' : group.valid === false ? 'text-xs text-warning' : 'text-xs text-secondary-text'}>
+                        {group.valid === true ? '已覆盖' : group.valid === false ? '未覆盖' : '等待行情'}
+                      </span>
+                    </div>
+                    <div className="mt-2 text-xs text-secondary-text">核心：{group.core_symbols.join('、') || '--'}</div>
+                    {group.backup_symbols.length ? <div className="mt-1 text-xs text-muted-text">备用：{group.backup_symbols.join('、')}</div> : null}
+                    <div className="mt-2 text-xs text-secondary-text">{group.reason ?? '等待实时结构判断'}</div>
+                  </div>
+                ))}
+              </div>
+            ) : <div className="text-sm text-secondary-text">未配置产业链代表组；通用方案仍可按三层条件运行。</div>}
+          </Card>
+
           <Card title="监控池实时明细" subtitle="名称会随行情源自动解析，数据缺失时不缩小分母" padding="none">
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
                 <thead className="border-b border-border/60 text-left text-xs text-secondary-text">
-                  <tr><th className="px-4 py-3">代码 / 名称</th><th className="px-4 py-3">现价</th><th className="px-4 py-3">开盘</th><th className="px-4 py-3">涨跌</th><th className="px-4 py-3">成交额</th><th className="px-4 py-3">3 分钟结构</th><th className="px-4 py-3">状态</th></tr>
+                  <tr><th className="px-4 py-3">代码 / 名称</th><th className="px-4 py-3">产业链角色</th><th className="px-4 py-3">现价</th><th className="px-4 py-3">开盘</th><th className="px-4 py-3">涨跌</th><th className="px-4 py-3">成交额</th><th className="px-4 py-3">3 分钟结构</th><th className="px-4 py-3">行情时效</th><th className="px-4 py-3">状态</th></tr>
                 </thead>
                 <tbody>
                   {(snapshot?.markers ?? []).map((item) => (
                     <tr key={item.code} className="border-b border-border/40 last:border-0">
                       <td className="px-4 py-3"><div className="font-medium text-foreground">{item.name || item.code}</div><div className="text-xs text-secondary-text">{item.code}</div></td>
+                      <td className="px-4 py-3 text-xs text-secondary-text">{item.representative_roles?.join('、') || '--'}</td>
                       <td className="px-4 py-3 text-foreground">{formatNumber(item.price)}</td>
                       <td className="px-4 py-3 text-secondary-text">{formatNumber(item.open_price)}</td>
                       <td className={`px-4 py-3 ${item.change_pct != null && item.change_pct >= 0 ? 'text-success' : 'text-danger'}`}>{item.change_pct == null ? '--' : `${item.change_pct >= 0 ? '+' : ''}${formatNumber(item.change_pct)}%`}</td>
                       <td className="px-4 py-3 text-secondary-text">{formatAmount(item.amount)}</td>
                       <td className="px-4 py-3 text-secondary-text">{item.pattern || (item.fields_missing?.join(', ') ?? '--')}</td>
-                      <td className="px-4 py-3"><span className={item.valid ? 'text-success' : item.fields_missing?.length ? 'text-danger' : 'text-warning'}>{item.valid ? '强势' : item.fields_missing?.length ? '数据缺失' : '未满足'}</span></td>
+                      <td className={`px-4 py-3 ${quoteFreshness(item).className}`}>{quoteFreshness(item).label}</td>
+                      <td className="px-4 py-3"><span className={item.valid ? 'text-success' : item.data_issues?.length ? 'text-danger' : 'text-warning'}>{item.valid ? '强势' : item.is_fresh === false ? '行情陈旧' : item.fields_missing?.length ? '数据缺失' : '未满足'}</span></td>
                     </tr>
                   ))}
-                  {!snapshot?.markers?.length ? <tr><td colSpan={7} className="px-4 py-8 text-center text-secondary-text">尚未有实时快照</td></tr> : null}
+                  {!snapshot?.markers?.length ? <tr><td colSpan={9} className="px-4 py-8 text-center text-secondary-text">尚未有实时快照</td></tr> : null}
                 </tbody>
               </table>
             </div>
@@ -390,6 +490,26 @@ const IntradayMonitorPage: React.FC = () => {
               <label className="text-sm text-secondary-text">有效结束<input className="mt-1 input-surface w-full" type="date" value={form.end_date ?? ''} onChange={(event) => updateForm('end_date', event.target.value || null)} /></label>
             </div>
             <label className="mt-4 block text-sm text-secondary-text">监控池代码（逗号分隔）<textarea className="input-surface mt-1 min-h-24 w-full" value={form.monitored_symbols.join(',')} onChange={(event) => updateForm('monitored_symbols', event.target.value.split(',').map((item) => item.trim()).filter(Boolean))} /></label>
+            <div className="mt-5 rounded-xl border border-border/60 bg-card/40 p-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <div className="text-sm font-medium text-foreground">产业链代表组</div>
+                  <div className="mt-1 text-xs text-secondary-text">确认时至少两个方向的核心代表走强。所有代码必须同时在监控池内；备用不会因盘中领涨而替代走弱的核心。</div>
+                </div>
+                <Button variant="outline" size="sm" onClick={addRepresentativeGroup}><Plus className="h-4 w-4" />添加方向</Button>
+              </div>
+              <div className="mt-4 space-y-3">
+                {form.representative_groups.map((group, index) => (
+                  <div key={group.key} className="grid gap-3 rounded-lg border border-border/50 p-3 lg:grid-cols-[minmax(120px,0.7fr)_minmax(180px,1fr)_minmax(180px,1fr)_auto]">
+                    <label className="text-xs text-secondary-text">方向<input className="input-surface mt-1 w-full" value={group.label} onChange={(event) => updateRepresentativeGroup(index, 'label', event.target.value)} /></label>
+                    <label className="text-xs text-secondary-text">核心代码（逗号分隔）<input className="input-surface mt-1 w-full" value={group.core_symbols.join(',')} onChange={(event) => updateRepresentativeGroup(index, 'core_symbols', event.target.value.split(',').map((item) => item.trim()).filter(Boolean))} /></label>
+                    <label className="text-xs text-secondary-text">备用代码（逗号分隔）<input className="input-surface mt-1 w-full" value={group.backup_symbols.join(',')} onChange={(event) => updateRepresentativeGroup(index, 'backup_symbols', event.target.value.split(',').map((item) => item.trim()).filter(Boolean))} /></label>
+                    <div className="flex items-end"><Button variant="ghost" size="sm" aria-label={`删除${group.label}`} onClick={() => removeRepresentativeGroup(index)}><X className="h-4 w-4" />删除</Button></div>
+                  </div>
+                ))}
+                {!form.representative_groups.length ? <div className="text-xs text-secondary-text">未配置时会退化为原有三层条件，不启用产业链覆盖确认。</div> : null}
+              </div>
+            </div>
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2 text-xs text-secondary-text"><Settings2 className="h-4 w-4" />每 {form.poll_interval_seconds} 秒刷新；上市首日模式：{form.listing_day_mode ? '开启' : '关闭'}</div>
               <Button variant="primary" size="sm" isLoading={busy} onClick={() => void savePlan()}><Save className="h-4 w-4" />保存方案</Button>

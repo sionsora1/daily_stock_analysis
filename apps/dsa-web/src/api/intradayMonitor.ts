@@ -16,6 +16,7 @@ function toSnakePayload(payload: Partial<IntradayMonitorPlanPayload>): Record<st
     ['event_symbol', 'event_symbol'],
     ['sector_symbol', 'sector_symbol'],
     ['monitored_symbols', 'monitored_symbols'],
+    ['representative_groups', 'representative_groups'],
     ['majority_ratio', 'majority_ratio'],
     ['initial_time', 'initial_time'],
     ['confirm_time', 'confirm_time'],

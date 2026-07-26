@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/ZhuLinsen/daily_stock_analysis/releases) page.
 
 ## [Unreleased]
+- [改进] 盘中综合信号监控改为按真实行情时间戳计算滚动 3 分钟量价结构，并在确认窗口内重新统计两次连续有效刷新。
+- [改进] 盘中综合信号监控按方案各自轮询间隔调度，陈旧行情不参与信号确认，页面新增行情时效与确认进度展示。
+- [改进] 盘中综合信号监控新增设备、关键零部件、材料代表性确认，要求至少两个产业方向的核心代表走强，并支持预配置核心/备用名单与页面展示。
 - [新功能] 新增可复用盘中综合信号监控，支持长鑫、159516 与设备材料监控池三层确认、后台轮询、实时页面、状态历史和有效期配置。
 - [测试] 盘中综合信号页面新增隔离模拟测试，可验证确认、失效与恢复链路而不污染真实行情状态。
 - [修复] Web 持仓页首屏快照改用 `include_realtime=false` 快速估值，跳过逐票实时行情预取后先展示持仓列表，避免外部实时行情源变慢时长时间空白等待。
