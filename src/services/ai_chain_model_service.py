@@ -192,6 +192,13 @@ class AIChainModelService:
             )
             self._progress(task_id, 80, "计算市场闸门、相对强弱和仓位约束")
             wide_market_bars = frames.pop(WIDE_MARKET_CODE, None)
+            calibration = AIChainBacktestService(
+                universe, profiles, AIChainModelProfile()
+            ).run(
+                daily_bars_by_code=frames,
+                wide_market_bars=wide_market_bars,
+                rebalance_every_days=5,
+            ).calibration_observations
             result = score_ai_chain_universe(
                 daily_bars_by_code=frames,
                 universe=universe,
@@ -199,6 +206,7 @@ class AIChainModelService:
                 as_of_date=effective_as_of,
                 model_profile=AIChainModelProfile(),
                 wide_market_bars=wide_market_bars,
+                calibration_observations=calibration,
             )
             warnings = list(result.warnings) + [
                 f"{code} 成交额覆盖不足，已退回成交量因子"

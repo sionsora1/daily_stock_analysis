@@ -75,6 +75,12 @@ def test_walk_forward_uses_next_open_and_is_reproducible():
     assert first.points[0].execution_price_source == "next_open"
     assert first.points == second.points
     assert first.metrics == second.metrics
+    assert first.calibration_observations == second.calibration_observations
+    assert first.calibration_observations
+    assert all(
+        observation["completed_date"] <= first.points[-1].exit_date
+        for observation in first.calibration_observations
+    )
 
 
 def test_cost_model_reduces_walk_forward_portfolio_value():

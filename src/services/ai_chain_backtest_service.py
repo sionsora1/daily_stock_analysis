@@ -58,6 +58,7 @@ class AIChainBacktestResult:
     cost_model: BacktestCostModel
     points: tuple[AIChainBacktestPoint, ...]
     metrics: dict[str, float]
+    calibration_observations: tuple[dict[str, Any], ...] = ()
 
 
 class AIChainBacktestService:
@@ -93,6 +94,7 @@ class AIChainBacktestService:
                 cost_model=costs,
                 points=(),
                 metrics=_empty_metrics(),
+                calibration_observations=(),
             )
 
         portfolio_value = 1.0
@@ -168,6 +170,7 @@ class AIChainBacktestService:
             cost_model=costs,
             points=tuple(points),
             metrics=_metrics(points, rebalance_every_days),
+            calibration_observations=tuple(calibration),
         )
 
 
