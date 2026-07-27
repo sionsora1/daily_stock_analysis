@@ -13,6 +13,7 @@ from fastapi import APIRouter
 
 from api.v1.endpoints import (
     agent,
+    ai_chain_model,
     alerts,
     alphasift,
     analysis,
@@ -43,6 +44,12 @@ router.include_router(
     agent.router,
     prefix="/agent",
     tags=["Agent"]
+)
+
+router.include_router(
+    ai_chain_model.router,
+    prefix="/ai-chain-model",
+    tags=["AIChainModel"]
 )
 
 router.include_router(

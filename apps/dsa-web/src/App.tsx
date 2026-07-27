@@ -24,6 +24,7 @@ const AlertsPage = lazy(() => import('./pages/AlertsPage'));
 const IntradayMonitorPage = lazy(() => import('./pages/IntradayMonitorPage'));
 const TokenUsagePage = lazy(() => import('./pages/TokenUsagePage'));
 const StockScreeningPage = lazy(() => import('./pages/StockScreeningPage'));
+const AiChainModelPage = lazy(() => import('./pages/AiChainModelPage'));
 
 const AppContent: React.FC = () => {
   const location = useLocation();
@@ -85,6 +86,7 @@ const AppContent: React.FC = () => {
         <Route path="/portfolio" element={<PortfolioPage />} />
         <Route path="/decision-signals" element={<DecisionSignalsPage />} />
         <Route path="/screening" element={<StockScreeningPage />} />
+        <Route path="/ai-chain-model" element={<AiChainModelPage />} />
         <Route path="/backtest" element={<BacktestPage />} />
         <Route path="/alerts" element={<AlertsPage />} />
         <Route path="/intraday-monitor" element={<IntradayMonitorPage />} />

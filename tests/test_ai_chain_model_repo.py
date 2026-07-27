@@ -114,3 +114,27 @@ def test_backtest_points_are_paginated_in_rebalance_order(model_repo):
 
     assert total == 3
     assert [point.sequence for point in page] == [2]
+
+
+def test_backtest_run_persists_completion_metrics_and_failure_reason(model_repo):
+    backtest = model_repo.create_backtest_run(
+        model_version="v1",
+        start_date=date(2023, 7, 1),
+        end_date=date(2026, 7, 24),
+        parameters={"holding_days": 20},
+        cost_model={"commission": 0.0003},
+        benchmarks={"ai_equal_weight": "constructed"},
+    )
+
+    finished = model_repo.finish_backtest_run(
+        backtest.id,
+        metrics={"final_portfolio_value": 1.12},
+        status="failed",
+        failure_reason="missing benchmark bars",
+    )
+    loaded = model_repo.get_backtest_run(backtest.id)
+
+    assert finished.status == "failed"
+    assert loaded is not None
+    assert loaded.metrics_json == '{"final_portfolio_value": 1.12}'
+    assert loaded.failure_reason == "missing benchmark bars"

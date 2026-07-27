@@ -20,7 +20,7 @@ from src.storage import (
     AiChainModelScore,
     AiChainPortfolioBacktestPoint,
     AiChainPortfolioBacktestRun,
-    AiChainUniverseMember,
+    AiChainUniverseMember as AiChainUniverseMemberRecord,
     DatabaseManager,
     utc_naive_now,
 )
@@ -48,11 +48,11 @@ class AIChainModelRepository:
         with self.db.session_scope() as session:
             for member in member_list:
                 existing = session.execute(
-                    select(AiChainUniverseMember).where(
+                    select(AiChainUniverseMemberRecord).where(
                         and_(
-                            AiChainUniverseMember.universe_version == universe_version,
-                            AiChainUniverseMember.code == member.code,
-                            AiChainUniverseMember.effective_from == member.effective_from,
+                            AiChainUniverseMemberRecord.universe_version == universe_version,
+                            AiChainUniverseMemberRecord.code == member.code,
+                            AiChainUniverseMemberRecord.effective_from == member.effective_from,
                         )
                     )
                 ).scalar_one_or_none()
@@ -68,7 +68,7 @@ class AIChainModelRepository:
                 }
                 if existing is None:
                     session.add(
-                        AiChainUniverseMember(
+                        AiChainUniverseMemberRecord(
                             universe_version=universe_version,
                             code=member.code,
                             effective_from=member.effective_from,
@@ -184,6 +184,33 @@ class AIChainModelRepository:
                 session.expunge(row)
             return list(rows)
 
+    def list_successful_runs(
+        self, *, page: int = 1, page_size: int = 30
+    ) -> Tuple[List[AiChainModelRun], int]:
+        """Return successful daily snapshots, newest first, for API history."""
+        if page < 1:
+            raise ValueError("page must be at least 1")
+        if not 1 <= page_size <= 200:
+            raise ValueError("page_size must be within [1, 200]")
+        with self.db.session_scope() as session:
+            total = int(
+                session.execute(
+                    select(func.count(AiChainModelRun.id)).where(
+                        AiChainModelRun.status == "succeeded"
+                    )
+                ).scalar_one()
+            )
+            rows = session.execute(
+                select(AiChainModelRun)
+                .where(AiChainModelRun.status == "succeeded")
+                .order_by(desc(AiChainModelRun.as_of_date), desc(AiChainModelRun.id))
+                .offset((page - 1) * page_size)
+                .limit(page_size)
+            ).scalars().all()
+            for row in rows:
+                session.expunge(row)
+            return list(rows), total
+
     def create_backtest_run(
         self,
         *,
@@ -228,6 +255,35 @@ class AIChainModelRepository:
                 session.add(self._backtest_point_row(backtest_run_id, point))
             session.flush()
         return len(points)
+
+    def finish_backtest_run(
+        self,
+        backtest_run_id: int,
+        *,
+        metrics: Mapping[str, Any],
+        status: str = "succeeded",
+        failure_reason: Optional[str] = None,
+    ) -> AiChainPortfolioBacktestRun:
+        """Persist final metrics after all walk-forward points were written."""
+        with self.db.session_scope() as session:
+            run = session.get(AiChainPortfolioBacktestRun, backtest_run_id)
+            if run is None:
+                raise ValueError(f"backtest run does not exist: {backtest_run_id}")
+            run.status = status
+            run.metrics_json = _json(dict(metrics))
+            run.failure_reason = failure_reason
+            run.completed_at = utc_naive_now()
+            session.flush()
+            session.expunge(run)
+            return run
+
+    def get_backtest_run(self, backtest_run_id: int) -> Optional[AiChainPortfolioBacktestRun]:
+        """Load one durable backtest header without loading its detail page."""
+        with self.db.session_scope() as session:
+            row = session.get(AiChainPortfolioBacktestRun, backtest_run_id)
+            if row is not None:
+                session.expunge(row)
+            return row
 
     def list_backtest_points(
         self, backtest_run_id: int, *, page: int = 1, page_size: int = 50

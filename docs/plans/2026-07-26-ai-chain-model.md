@@ -109,7 +109,7 @@
 
 ### 6. 接入 API 与异步任务
 
-新增 `api/v1/endpoints/ai_chain_model.py` 并在 `api/v1/router.py` 注册 `/ai-chain-model`。复用 `src/services/task_queue.py` 的通用后台任务能力，避免历史补数和回测阻塞 API 线程。
+新增 `api/v1/endpoints/ai_chain_model.py` 并在 `api/v1/router.py` 注册 `/ai-chain-model`。模型服务维护独立的单工作线程手动任务队列，避免历史补数和回测阻塞 API 线程，也不影响现有日常任务调度。
 
 接口契约：
 

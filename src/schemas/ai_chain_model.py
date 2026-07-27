@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from datetime import date
 from enum import Enum
-from typing import Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -69,6 +69,53 @@ class AdjustmentStatus(str, Enum):
     UNKNOWN = "unknown"
     CONSISTENT = "consistent"
     MIXED = "mixed"
+
+
+class MarketGate(str, Enum):
+    """Portfolio-level market-risk state derived from end-of-day bars."""
+
+    NORMAL = "normal"
+    CAUTION = "caution"
+    RISK_OFF = "risk_off"
+
+
+class AIChainModelAction(str, Enum):
+    """Decision-support action; never an order instruction."""
+
+    BUY = "buy"
+    HOLD = "hold"
+    REDUCE = "reduce"
+    AVOID = "avoid"
+    DATA_INSUFFICIENT = "data_insufficient"
+
+
+class AIChainModelProfile(BaseModel):
+    """Versioned, deterministic parameters for one daily scoring run."""
+
+    model_version: str = "v1"
+    holding_days: int = Field(default=20, ge=10, le=30)
+    min_history_bars: int = Field(default=60, ge=40, le=260)
+    min_coverage_ratio: float = Field(default=0.90, gt=0, le=1)
+    min_calibration_sample: int = Field(default=20, ge=1, le=1000)
+    core_buy_threshold: float = Field(default=60, ge=0, le=100)
+    observation_buy_threshold: float = Field(default=68, ge=0, le=100)
+    observation_score_penalty: float = Field(default=5, ge=0, le=30)
+    max_single_position: float = Field(default=0.15, gt=0, le=1)
+    max_ai_allocation: float = Field(default=0.60, gt=0, le=1)
+    max_hardware_subgroup_allocation: float = Field(default=0.20, gt=0, le=1)
+    max_observation_allocation: float = Field(default=0.15, ge=0, le=1)
+    min_holdings: int = Field(default=6, ge=1, le=20)
+    max_holdings: int = Field(default=8, ge=1, le=20)
+
+    @model_validator(mode="after")
+    def validate_constraints(self) -> "AIChainModelProfile":
+        if self.holding_days not in {10, 20, 30}:
+            raise ValueError("holding_days must be one of 10, 20, or 30")
+        if self.min_holdings > self.max_holdings:
+            raise ValueError("min_holdings cannot exceed max_holdings")
+        if self.max_observation_allocation > self.max_ai_allocation:
+            raise ValueError("max_observation_allocation cannot exceed max_ai_allocation")
+        return self
 
 
 class AIChainUniverseMember(BaseModel):
@@ -142,6 +189,41 @@ class DailyDataQualityReport(BaseModel):
     status: DataQualityStatus
     used_remote_fetch: bool = False
     failure_reasons: List[str] = Field(default_factory=list)
+
+
+class AIChainScoreResult(BaseModel):
+    """Published deterministic score for one stock on one end-of-day run."""
+
+    code: str = Field(pattern=r"^\d{6}$")
+    name: str
+    group: AIChainGroup
+    tier: UniverseTier
+    hardware_subgroup: Optional[HardwareSubgroup] = None
+    score: float = Field(ge=0, le=100)
+    group_rank: Optional[int] = Field(default=None, ge=1)
+    overall_rank: Optional[int] = Field(default=None, ge=1)
+    factor_snapshot: Dict[str, Any] = Field(default_factory=dict)
+    quality_snapshot: Dict[str, Any] = Field(default_factory=dict)
+    probability_up: Optional[float] = Field(default=None, ge=0, le=1)
+    probability_outperform: Optional[float] = Field(default=None, ge=0, le=1)
+    expected_return: Optional[float] = None
+    return_low: Optional[float] = None
+    return_high: Optional[float] = None
+    drawdown_risk: Optional[float] = Field(default=None, ge=0)
+    action: AIChainModelAction
+    suggested_weight: float = Field(default=0, ge=0, le=1)
+    reason: Optional[str] = None
+
+
+class AIChainModelResult(BaseModel):
+    """Pure-function output saved by the orchestration service as a run."""
+
+    as_of_date: date
+    model_profile: AIChainModelProfile
+    market_gate: MarketGate
+    market_gate_reason: str
+    scores: List[AIChainScoreResult]
+    warnings: List[str] = Field(default_factory=list)
 
 
 class AIChainUniverseConfig(BaseModel):
