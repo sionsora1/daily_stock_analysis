@@ -276,24 +276,36 @@ def _trim_samples(samples: Sequence[Dict[str, Any]], now: datetime) -> List[Dict
     return retained
 
 
-def _sample_before(
+def _sample_near(
     code: str,
     samples: Sequence[Dict[str, Any]],
     target: datetime,
 ) -> Optional[Dict[str, Any]]:
-    """Return the newest sample not later than a rolling-window anchor."""
-    candidate: Optional[Tuple[datetime, Dict[str, Any]]] = None
+    """Return the valid sample nearest a rolling-window anchor.
+
+    A full monitoring-pool refresh can take longer than its nominal polling
+    interval. Restricting the lookup to samples strictly before an anchor
+    turns a small scheduling delay into a permanent ``warming_up`` state. A
+    sample on either side of the historical anchor is valid when it remains
+    inside the existing tolerance. Ties prefer the earlier sample to keep the
+    comparison conservative.
+    """
+    candidate: Optional[Tuple[timedelta, bool, Dict[str, Any]]] = None
     for item in samples:
         sampled_at = _parse_market_timestamp(item.get("as_of")) if isinstance(item, dict) else None
         quotes = item.get("quotes") if isinstance(item, dict) else None
         quote = quotes.get(code) if isinstance(quotes, dict) else None
-        if sampled_at is None or not isinstance(quote, dict) or sampled_at > target:
+        if sampled_at is None or not isinstance(quote, dict):
             continue
-        if candidate is None or sampled_at > candidate[0]:
-            candidate = (sampled_at, quote)
-    if candidate is None or target - candidate[0] > SAMPLE_ANCHOR_TOLERANCE:
+        distance = abs(sampled_at - target)
+        if distance > SAMPLE_ANCHOR_TOLERANCE:
+            continue
+        is_before = sampled_at <= target
+        if candidate is None or (distance, not is_before) < (candidate[0], not candidate[1]):
+            candidate = (distance, is_before, quote)
+    if candidate is None:
         return None
-    return candidate[1]
+    return candidate[2]
 
 
 def _quote_freshness(quote: Any, now: datetime) -> Dict[str, Any]:
@@ -355,8 +367,8 @@ def _pattern_for(
 ) -> Tuple[str, Optional[float], Optional[float]]:
     """Classify recent three-minute amount flow and price behaviour."""
     current = _quote_to_sample(quote)
-    recent_anchor = _sample_before(code, samples, now - PATTERN_WINDOW)
-    previous_anchor = _sample_before(code, samples, now - PATTERN_WINDOW * 2)
+    recent_anchor = _sample_near(code, samples, now - PATTERN_WINDOW)
+    previous_anchor = _sample_near(code, samples, now - PATTERN_WINDOW * 2)
     if recent_anchor is None or previous_anchor is None:
         return "warming_up", None, None
 
@@ -937,9 +949,9 @@ class IntradayMonitorService:
             and representative["valid"]
         )
 
-        streak = int(previous.get("streak") or 0)
-        streak = streak + 1 if all_valid else 0
         phase, initial_reached, confirm_reached = self._phase_for(row, now)
+        streak = int(previous.get("streak") or 0)
+        streak = streak + 1 if all_valid and initial_reached else 0
         previous_confirm_streak = int(previous.get("confirm_streak") or 0)
         confirm_streak = previous_confirm_streak + 1 if all_valid and confirm_reached else 0
         previous_status = row.current_status or STATUS_OBSERVE
