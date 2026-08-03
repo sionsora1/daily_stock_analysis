@@ -197,6 +197,90 @@ def test_pattern_uses_three_minute_timestamps_with_a_ten_second_poll_interval():
     assert snapshot["event"]["previous_flow"] == 180.0
 
 
+def test_pattern_uses_nearest_timestamp_when_pool_refresh_runs_slowly():
+    codes = ["688825", "159516", "002371", "603690"]
+
+    def sample_quotes(amount: float, price: float) -> dict:
+        return {
+            code: {"price": price, "open_price": 10.0, "amount": amount, "volume": 1000}
+            for code in codes
+        }
+
+    plan = make_plan(
+        {
+            "samples": [
+                {"as_of": "2026-07-27T10:00:59+08:00", "quotes": sample_quotes(100.0, 10.0)},
+                {"as_of": "2026-07-27T10:03:49+08:00", "quotes": sample_quotes(220.0, 11.0)},
+            ],
+            "streak": 0,
+            "confirm_streak": 0,
+        }
+    )
+    service = IntradayMonitorService(
+        repository=FakeRepo(plan),
+        fetcher_manager=FakeFetcher(amount=430.0, price=15.0),
+    )
+
+    snapshot = service.evaluate_plan(plan, now=datetime.fromisoformat("2026-07-27T10:06:13+08:00"))
+
+    assert snapshot["event"]["pattern"] == "attack_with_volume"
+    assert snapshot["event"]["recent_flow"] == 210.0
+    assert snapshot["event"]["previous_flow"] == 120.0
+
+
+def test_pattern_stays_warming_up_when_nearest_sample_exceeds_tolerance():
+    codes = ["688825", "159516", "002371", "603690"]
+    quotes = {
+        code: {"price": 10.0, "open_price": 10.0, "amount": 100.0, "volume": 1000}
+        for code in codes
+    }
+    plan = make_plan(
+        {
+            "samples": [
+                {"as_of": "2026-07-27T10:00:00+08:00", "quotes": quotes},
+                {"as_of": "2026-07-27T10:01:00+08:00", "quotes": quotes},
+            ],
+            "streak": 0,
+            "confirm_streak": 0,
+        }
+    )
+    service = IntradayMonitorService(
+        repository=FakeRepo(plan),
+        fetcher_manager=FakeFetcher(amount=430.0, price=15.0),
+    )
+
+    snapshot = service.evaluate_plan(plan, now=datetime.fromisoformat("2026-07-27T10:06:13+08:00"))
+
+    assert snapshot["event"]["pattern"] == "warming_up"
+    assert snapshot["event"]["recent_flow"] is None
+    assert snapshot["event"]["previous_flow"] is None
+
+
+def test_monitor_does_not_carry_pre_initial_strength_into_signal_window():
+    codes = ["688825", "159516", "002371", "603690"]
+    repo = FakeRepo(
+        make_plan(
+            warm_snapshot(
+                codes,
+                start="2026-07-27T09:53:00+08:00",
+                count=16,
+                interval_seconds=30,
+            )
+        )
+    )
+    service = IntradayMonitorService(repository=repo, fetcher_manager=FakeFetcher(amount=430.0, price=15.0))
+
+    before_window = service.evaluate_plan(repo.plan, now=datetime.fromisoformat("2026-07-27T09:59:30+08:00"))
+    first_window_refresh = service.evaluate_plan(repo.plan, now=datetime.fromisoformat("2026-07-27T10:00:00+08:00"))
+    second_window_refresh = service.evaluate_plan(repo.plan, now=datetime.fromisoformat("2026-07-27T10:00:30+08:00"))
+
+    assert before_window["status"] == "observe"
+    assert before_window["trigger_values"]["streak"] == 0
+    assert first_window_refresh["status"] == STATUS_CONTINUE
+    assert first_window_refresh["trigger_values"]["streak"] == 1
+    assert second_window_refresh["status"] == STATUS_PRELIMINARY
+
+
 def test_stale_quote_pauses_signal_without_counting_as_a_weakened_stock():
     codes = ["688825", "159516", "002371", "603690"]
     repo = FakeRepo(make_plan(warm_snapshot(codes, start="2026-07-27T10:22:30+08:00", interval_seconds=30)))

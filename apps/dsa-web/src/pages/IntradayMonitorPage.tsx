@@ -74,6 +74,29 @@ function formatTime(value?: string | null): string {
   return value.replace('T', ' ').slice(0, 19);
 }
 
+function formatShanghaiTime(value?: string | null): string | null {
+  if (!value) return null;
+  const timestamp = new Date(value);
+  if (Number.isNaN(timestamp.getTime())) return null;
+  return new Intl.DateTimeFormat('zh-CN', {
+    timeZone: 'Asia/Shanghai',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).format(timestamp);
+}
+
+function elapsedSince(value?: string | null): string | null {
+  if (!value) return null;
+  const timestamp = new Date(value);
+  if (Number.isNaN(timestamp.getTime())) return null;
+  const seconds = Math.max(0, Math.floor((Date.now() - timestamp.getTime()) / 1000));
+  if (seconds < 60) return `${seconds} 秒前`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)} 分 ${seconds % 60} 秒前`;
+  return `${Math.floor(seconds / 3600)} 小时 ${Math.floor((seconds % 3600) / 60)} 分前`;
+}
+
 function quoteFreshness(item?: IntradayMonitorInstrument): { label: string; className: string } {
   if (!item || item.fields_missing?.length) {
     return { label: '数据缺失', className: 'text-danger' };
@@ -83,7 +106,12 @@ function quoteFreshness(item?: IntradayMonitorInstrument): { label: string; clas
     return { label: `行情陈旧${age}`, className: 'text-danger' };
   }
   if (item.freshness === 'unknown') {
-    return { label: '时间戳未知', className: 'text-warning' };
+    const localTime = formatShanghaiTime(item.fetched_at);
+    const elapsed = elapsedSince(item.fetched_at);
+    if (localTime && elapsed) {
+      return { label: `本地拉取 ${localTime} · ${elapsed}`, className: 'text-warning' };
+    }
+    return { label: '本地拉取时间未知', className: 'text-warning' };
   }
   const age = item?.quote_age_seconds == null ? '' : ` · ${item.quote_age_seconds} 秒`;
   return { label: `新鲜${age}`, className: 'text-success' };
@@ -136,6 +164,7 @@ const IntradayMonitorPage: React.FC = () => {
   const status = statusMeta(snapshot?.status ?? selectedPlan?.current_status);
   const breadth = snapshot?.breadth;
   const representativeCoverage = snapshot?.representative_coverage;
+  const warmingUpCount = snapshot?.markers?.filter((item) => item.pattern === 'warming_up').length ?? 0;
   const representativeGroups: Array<IntradayRepresentativeGroup & { valid?: boolean; reason?: string }> = representativeCoverage?.groups
     ?? selectedPlan?.representative_groups
     ?? [];
@@ -400,14 +429,22 @@ const IntradayMonitorPage: React.FC = () => {
             <StatCard
               label="监控池强势数量"
               value={breadth ? `${breadth.strong ?? 0}/${breadth.total ?? 0}` : '--'}
-              hint={breadth ? `要求至少 ${breadth.required ?? selectedPlan?.required_count ?? '--'} 只 · ${((breadth.ratio ?? 0) * 100).toFixed(0)}%` : '等待行情数据'}
+              hint={breadth
+                ? warmingUpCount > 0
+                  ? `${warmingUpCount}/${breadth.total ?? 0} 只等待三分钟量价样本 · 强势要求至少 ${breadth.required ?? selectedPlan?.required_count ?? '--'} 只`
+                  : `要求至少 ${breadth.required ?? selectedPlan?.required_count ?? '--'} 只 · ${((breadth.ratio ?? 0) * 100).toFixed(0)}%`
+                : '等待行情数据'}
               tone={breadth?.valid ? 'success' : 'warning'}
               icon={<ShieldAlert className="h-5 w-5" />}
             />
             <StatCard
               label="核心代表覆盖"
               value={representativeCoverage?.enabled ? `${representativeCoverage.strong ?? 0}/${representativeCoverage.groups?.length ?? 0}` : '未配置'}
-              hint={representativeCoverage?.enabled ? `至少 ${representativeCoverage.required ?? 0} 个产业方向核心走强` : '通用方案不限制产业链方向'}
+              hint={representativeCoverage?.enabled
+                ? warmingUpCount > 0
+                  ? `代表股量价样本预热中 · 至少 ${representativeCoverage.required ?? 0} 个产业方向核心走强`
+                  : `至少 ${representativeCoverage.required ?? 0} 个产业方向核心走强`
+                : '通用方案不限制产业链方向'}
               tone={representativeCoverage?.enabled ? (representativeCoverage.valid ? 'success' : 'warning') : 'default'}
               icon={<ShieldAlert className="h-5 w-5" />}
             />

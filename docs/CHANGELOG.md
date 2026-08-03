@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/ZhuLinsen/daily_stock_analysis/releases) page.
 
 ## [Unreleased]
+- [修复] 盘中综合信号监控的三分钟量价窗口改为在既有容差内匹配最近样本，避免慢轮询将完整监控池长期误判为预热；页面同步显示预热标的数量，并在缺少交易所时间戳时展示本地拉取时效。
 - [新功能] 新增可手动运行的 A 股 AI 链评分与走步回测：提供市场风险闸门、硬件/端侧/应用分组看板、数据质量告警、仓位约束和独立 API/Web 入口；不接券商、不自动交易。
 - [新功能] 新增可回放的 A 股 AI 产业链分类池、硬件慢变量档案、日线质量闸门与独立模型运行/回测持久化契约，为后续相对强弱评分提供审计基础。
 - [鏀硅繘] Added a built-in 360 News direct search provider so Chinese news discovery can work without API keys or a proxy.
