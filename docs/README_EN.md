@@ -60,7 +60,7 @@ English | [简体中文](../README.md) | [繁體中文](README_CHT.md)
 | News Search | [Anspire](https://open.anspire.cn/?share_code=QFBC0FYC), [SerpAPI](https://serpapi.com/baidu-search-api?utm_source=github_daily_stock_analysis), [Tavily](https://tavily.com/), [Bocha](https://open.bocha.cn/), [Brave](https://brave.com/search/api/), [MiniMax](https://platform.minimaxi.com/), SearXNG |
 | Social Sentiment | [Stock Sentiment API](https://api.adanos.org/docs) for Reddit / X / Polymarket, US stocks only |
 
-> Full behavior is documented in [Data Source Configuration](./full-guide_EN.md#data-source-configuration).
+> The project includes free market-data sources such as AkShare, Baostock, and YFinance and can run without extra data-source credentials. These free sources can be rate-limited, change upstream contracts, or fluctuate by network condition, so stability is not guaranteed. For scheduled runs, batch analysis, or steadier quotes, configure token-based sources such as TickFlow, Tushare, or Longbridge; market coverage, Actions mappings, and fallback rules are documented in [Data Source Configuration](./full-guide_EN.md#data-source-configuration).
 
 ## 🚀 Quick Start
 
@@ -125,6 +125,18 @@ News search strongly improves sentiment, announcements, events, and catalyst qua
 | `SEARXNG_BASE_URLS` | Self-hosted SearXNG instances for quota-free fallback | Optional |
 
 More search providers, social sentiment, and fallback behavior are in [Search Configuration](./full-guide_EN.md#search-service-configuration).
+
+**Market data sources (optional)**
+
+> Free sources like AkShare, Baostock, and YFinance are used by default. "Not configured" messages in the logs are informational and do not affect execution.
+> For more stable data, configure the following secrets per market:
+
+| Secret Name | Market | Description |
+|-------------|:------:|-------------|
+| `TUSHARE_TOKEN` | A-shares | Improves historical data stability |
+| `LONGBRIDGE_OAUTH_CLIENT_ID` + `LONGBRIDGE_OAUTH_TOKEN_CACHE_B64` | HK/US stocks | Fills in volume ratio, turnover rate, P/E, and other fields |
+
+> See [Data Source Configuration](./full-guide_EN.md#data-source-configuration).
 
 #### 3. Enable Actions
 
@@ -231,11 +243,11 @@ After configuring any available AI API key, the Web `/chat` page can use strateg
 
 ## 🧩 Related Projects
 
-> DSA focuses on daily analysis reports. These sibling projects cover stock screening, strategy validation, and strategy evolution for users who want to extend the workflow. They are maintained independently today, with candidate import, backtest validation, and report handoff planned as future integration directions.
+> DSA focuses on daily analysis reports. Its screening implementation references AlphaSift, while AlphaEvo covers strategy validation and evolution.
 
 | Project | Focus |
 |---------|-------|
-| [AlphaSift](https://github.com/ZhuLinsen/alphasift) | Multi-factor stock screening and full-market scanning for building candidate watchlists |
+| [AlphaSift](https://github.com/ZhuLinsen/alphasift) | Reference project for DSA's screening implementation |
 | [AlphaEvo](https://github.com/ZhuLinsen/alphaevo) | Strategy backtesting and self-evolution experiments for validating rules and iteratively exploring strategy parameters and combinations |
 
 ## 📞 Contact
