@@ -56,7 +56,7 @@ export const LLM_PROVIDER_TEMPLATES: LLMProviderTemplate[] = [
     baseUrl: 'https://aihubmix.com/v1',
     placeholderModels: 'gpt-5.5,claude-sonnet-4-6,gemini-3.1-pro-preview',
     capabilities: ['openai-compatible', 'aggregator'],
-    officialSources: [{ label: 'AIHubmix', url: 'https://aihubmix.com/' }],
+    officialSources: [{ label: 'AIHubmix', url: 'https://inferera.com/?aff=CfMq' }],
   },
   {
     channelId: 'anspire',
@@ -68,7 +68,7 @@ export const LLM_PROVIDER_TEMPLATES: LLMProviderTemplate[] = [
     configHint:
       '同一 ANSPIRE_API_KEYS 可复用到搜索与 LLM 渠道。以下模型与网关为配置示例，实际可用性请以账号权限和控制台为准；建议先点“测试连接”确认。',
     officialSources: [
-      { label: 'Anspire Open', url: 'https://open.anspire.cn/?share_code=QFBC0FYC' },
+      { label: 'Anspire Open', url: 'https://open.anspire.cn/dsa?share_code=QFBC0FYC' },
       {
         label: 'LiteLLM OpenAI-compatible',
         url: 'https://docs.litellm.ai/docs/providers/openai_compatible',

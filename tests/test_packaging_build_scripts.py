@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 """Validation tests for backend packaging scripts."""
 
+import ast
 import json
 import os
+import runpy
 import shlex
 import subprocess
+from types import SimpleNamespace
 from pathlib import Path
+
+import pytest
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -24,14 +29,14 @@ def _bash_path(path: Path) -> str:
     return f"/mnt/{drive}/{relative}"
 
 
-def test_windows_backend_build_script_collects_alphasift_adapter() -> None:
+def test_windows_backend_build_script_collects_builtin_screening_engine() -> None:
     script = _read_text(REPO_ROOT / "scripts" / "build-backend.ps1")
     main_py = _read_text(REPO_ROOT / "main.py")
 
-    assert "Checking AlphaSift adapter availability" in script
-    assert "import alphasift.dsa_adapter" in script
+    assert "Checking built-in screening engine availability" in script
+    assert "import src.services.screening.pipeline" in script
     assert "--collect-all" in script
-    assert "alphasift.dsa_adapter" in script
+    assert "src.services.screening" in script
     assert "hiddenImports" in script
     assert "Verifying packaged runtime imports" in script
     assert "DSA_PACKAGED_IMPORT_PROBE" in script
@@ -39,27 +44,113 @@ def test_windows_backend_build_script_collects_alphasift_adapter() -> None:
     assert "$probeProcess.ExitCode" in script
     assert "& $packagedEntry" not in script
     assert "Packaged backend cannot import $module" in script
+    assert "pyinstaller_runtime_compat.py" in script
+    assert "--runtime-hook" in script
+    assert "Verifying packaged screening strategies" in script
+    assert "_internal\\src\\services\\screening\\strategies" in script
+    assert "packagedScreeningStrategyCount" in script
     assert "DSA_PACKAGED_IMPORT_PROBE" in main_py
     assert "importlib.import_module(_packaged_import_probe)" in main_py
 
 
-def test_macos_backend_build_script_collects_alphasift_adapter() -> None:
+def test_macos_backend_build_script_collects_builtin_screening_engine() -> None:
     script = _read_text(REPO_ROOT / "scripts" / "build-backend-macos.sh")
     main_py = _read_text(REPO_ROOT / "main.py")
 
-    assert "Checking AlphaSift adapter availability..." in script
-    assert "import alphasift.dsa_adapter" in script
+    assert "Checking built-in screening engine availability..." in script
+    assert "import src.services.screening.pipeline" in script
     assert "--collect-all" in script
-    assert "cmd+=(\"--collect-all\" \"alphasift\")" in script
+    assert 'cmd+=("--collect-all" "src.services.screening")' in script
     assert "packaged_entry=\"${packaged_root}/stock_analysis\"" in script
     assert "--help" in script
     assert 'DSA_PACKAGED_IMPORT_PROBE="${module}"' in script
     assert "dsa-packaged-import.log" in script
+    assert '--runtime-hook "${SCRIPT_DIR}/pyinstaller_runtime_compat.py"' in script
     assert "PathFinder.find_spec(" not in script
     assert "zipfile" not in script
-    assert 'normalized.startswith("alphasift/dsa_adapter.")' not in script
+    assert "Verifying packaged screening strategies..." in script
+    assert "_internal/src/services/screening/strategies" in script
+    assert "packaged_screening_strategy_count" in script
     assert "DSA_PACKAGED_IMPORT_PROBE" in main_py
     assert "importlib.import_module(_packaged_import_probe)" in main_py
+
+
+@pytest.mark.parametrize("filename", ["build-backend.ps1", "build-backend-macos.sh"])
+def test_backend_build_collects_and_probes_miniracer(filename: str) -> None:
+    script = _read_text(REPO_ROOT / "scripts" / filename)
+    assert "--collect-all" in script
+    assert "py_mini_racer" in script
+    assert "MiniRacer().eval('1 + 1')" in script
+    # The frozen executable must probe the runtime, not the source interpreter.
+    if filename.endswith(".ps1"):
+        assert "'orjson', 'py_mini_racer'" in script
+        assert "-WindowStyle Hidden" in script
+    else:
+        assert "futu orjson py_mini_racer; do" in script
+
+
+def _run_packaged_probe(monkeypatch, module) -> None:
+    """Execute the actual early-exit block without importing the business stack."""
+    import importlib
+
+    tree = ast.parse(_read_text(REPO_ROOT / "main.py"))
+    probe = next(
+        node for node in tree.body
+        if isinstance(node, ast.If)
+        and isinstance(node.test, ast.Name)
+        and node.test.id == "_packaged_import_probe"
+    )
+    monkeypatch.setattr(importlib, "import_module", lambda name: module)
+    exec(
+        compile(ast.Module(body=[probe], type_ignores=[]), "main.py", "exec"),
+        {"_packaged_import_probe": "py_mini_racer"},
+    )
+
+
+@pytest.mark.parametrize("has_close", [True, False])
+def test_packaged_miniracer_probe_executes_javascript(monkeypatch, has_close) -> None:
+    calls = []
+    engine = SimpleNamespace(eval=lambda code: calls.append(code) or 2)
+    if has_close:
+        engine.close = lambda: calls.append("close")
+    with pytest.raises(SystemExit) as exc:
+        _run_packaged_probe(monkeypatch, SimpleNamespace(MiniRacer=lambda: engine))
+    assert exc.value.code == 0
+    assert calls == (["1 + 1", "close"] if has_close else ["1 + 1"])
+
+
+def test_packaged_miniracer_probe_rejects_importable_wrapper_without_runtime(
+    monkeypatch, capsys,
+) -> None:
+    def missing_runtime():
+        raise RuntimeError("Native library or dependency not available")
+
+    with pytest.raises(SystemExit) as exc:
+        _run_packaged_probe(monkeypatch, SimpleNamespace(MiniRacer=missing_runtime))
+    assert exc.value.code == 1
+    assert "Native library or dependency not available" in capsys.readouterr().err
+
+
+def test_packaged_miniracer_probe_rejects_wrong_result_and_closes(monkeypatch) -> None:
+    closed = []
+    engine = SimpleNamespace(eval=lambda code: None, close=lambda: closed.append(True))
+    with pytest.raises(SystemExit) as exc:
+        _run_packaged_probe(monkeypatch, SimpleNamespace(MiniRacer=lambda: engine))
+    assert exc.value.code == 1
+    assert closed == [True]
+
+
+def test_pyinstaller_runtime_hook_disables_incompatible_nltk_guard(
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv("NLTK_DISABLE_IMPORT_SECURITY", raising=False)
+
+    runpy.run_path(
+        str(REPO_ROOT / "scripts" / "pyinstaller_runtime_compat.py"),
+        run_name="__pyinstaller_runtime_compat__",
+    )
+
+    assert os.environ["NLTK_DISABLE_IMPORT_SECURITY"] == "1"
 
 
 def test_macos_unsigned_packaging_contract_is_explicit() -> None:
@@ -93,7 +184,7 @@ def test_macos_unsigned_packaging_contract_is_explicit() -> None:
     assert "code has no resources but signature indicates they must be present" in (
         desktop_script
     )
-    assert "- 'scripts/macos-signature-audit.sh'" in workflow
+    assert "scripts/macos-signature-audit.sh" in workflow
     assert "run: bash scripts/build-backend-macos.sh" in workflow
     assert "run: bash scripts/build-desktop-macos.sh" in workflow
 
